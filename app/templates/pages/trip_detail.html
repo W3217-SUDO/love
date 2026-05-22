@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ trip.title }} · 旅行{% endblock %}
+{% block content %}
+<div class="card">
+  <h1 style="margin: 0 0 var(--space-2);">{{ trip.title }}</h1>
+  <p class="subtitle" style="margin: 0 0 var(--space-3);">
+    {% if trip.location %}📍 {{ trip.location }} · {% endif %}{{ trip.start_date.isoformat() }}{% if trip.end_date %} ~ {{ trip.end_date.isoformat() }}{% endif %} · {{ creator_name }}
+  </p>
+  {% if trip.description %}
+    <div style="white-space: pre-line; color: var(--color-text); margin-top: var(--space-3);">{{ trip.description }}</div>
+  {% endif %}
+</div>
+
+{% if media_list %}
+  <div class="card">
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-2);">
+      {% for link, m in media_list %}
+        <a href="{{ m.preview_url }}" target="_blank" style="display:block;">
+          <img src="{{ m.thumb_url }}" alt="{{ link.caption or '' }}"
+               style="width:100%; aspect-ratio:1; object-fit:cover; border-radius: var(--radius-md);">
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+{% else %}
+  <div class="card" style="text-align:center;">
+    <p class="subtitle">还没有照片 — 编辑页可以添加</p>
+  </div>
+{% endif %}
+
+<div class="card" style="display:flex; gap: var(--space-3);">
+  <a class="btn-secondary" href="/trip/{{ trip.id }}/edit" style="flex:1; text-align:center;">编辑</a>
+  {% if is_creator %}
+    <form action="/trip/{{ trip.id }}/delete" method="post" style="flex:1;"
+          onsubmit="return confirm('确认删除这次旅行？所有照片关联会一并失效');">
+      <button class="btn-secondary" type="submit" style="width:100%; color:var(--color-error);">删除</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

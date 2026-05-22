@@ -22,6 +22,7 @@ from app.modules.daily_log.router import router as daily_log_router
 from app.modules.diary.router import router as diary_router
 from app.modules.media.router import router as media_router
 from app.modules.timeline.router import router as timeline_router
+from app.modules.trip.router import router as trip_router
 from app.rate_limit import limiter
 from app.scheduler import start_scheduler, stop_scheduler
 from app.templating import templates
@@ -97,6 +98,7 @@ app.include_router(daily_log_router)
 app.include_router(diary_router)
 app.include_router(media_router)
 app.include_router(timeline_router)
+app.include_router(trip_router)
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

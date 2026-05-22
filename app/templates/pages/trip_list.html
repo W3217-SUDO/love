@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}旅行 · Couple Diary{% endblock %}
+{% block content %}
+<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+  <h1 style="margin:0;">旅行</h1>
+  <a class="btn" href="/trip/new">+ 新的旅行</a>
+</div>
+
+{% if trips %}
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-4);">
+    {% for t in trips %}
+      <a href="/trip/{{ t.id }}" class="card" style="text-decoration:none; color:inherit; padding:0; overflow:hidden; display:block;">
+        {% if t.cover_thumb_url %}
+          <img src="{{ t.cover_thumb_url }}" alt="" style="width:100%; aspect-ratio: 4/3; object-fit:cover; display:block;">
+        {% else %}
+          <div style="width:100%; aspect-ratio: 4/3; background:var(--color-accent-soft); display:flex; align-items:center; justify-content:center; font-size:48px;">✈️</div>
+        {% endif %}
+        <div style="padding: var(--space-4);">
+          <h3 style="margin: 0 0 var(--space-1);">{{ t.title }}</h3>
+          <p class="subtitle" style="margin: 0;">
+            {{ t.location or '' }}{% if t.location %} · {% endif %}{{ t.start_date.isoformat() }}{% if t.end_date %} ~ {{ t.end_date.isoformat() }}{% endif %}
+          </p>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card" style="text-align:center; padding: var(--space-8);">
+    <p style="font-size: 48px;">✈️</p>
+    <p class="subtitle">还没有记录任何旅行</p>
+    <a class="btn" href="/trip/new" style="margin-top: var(--space-4);">记录第一次旅行</a>
+  </div>
+{% endif %}
+{% endblock %}
