@@ -1,0 +1,23 @@
+{# Bottom nav (mobile) / sidebar (desktop). Active item determined by 'active' var passed in. #}
+<nav class="bottom-nav" data-nav>
+  <a href="/" {% if active == 'today' %}aria-current="page"{% endif %}>
+    <span aria-hidden="true">🏠</span>
+    <span>今天</span>
+  </a>
+  <a href="/calendar" {% if active == 'calendar' %}aria-current="page"{% endif %}>
+    <span aria-hidden="true">📅</span>
+    <span>日历</span>
+  </a>
+  <a href="/diary" {% if active == 'diary' %}aria-current="page"{% endif %}>
+    <span aria-hidden="true">📓</span>
+    <span>日记</span>
+  </a>
+  <a href="/trip" {% if active == 'trip' %}aria-current="page"{% endif %}>
+    <span aria-hidden="true">✈️</span>
+    <span>旅行</span>
+  </a>
+  <a href="/me" {% if active == 'me' %}aria-current="page"{% endif %}>
+    <span aria-hidden="true">👥</span>
+    <span>我们</span>
+  </a>
+</nav>

@@ -1,0 +1,6 @@
+{# CSRF token hidden input. The actual token generation is handled in a later task;
+   this is a placeholder that emits a no-op for now so templates can include it
+   without breaking. #}
+{% if csrf_token is defined %}
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+{% endif %}

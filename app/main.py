@@ -1,9 +1,11 @@
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 
@@ -13,6 +15,7 @@ from app.errors import register_exception_handlers
 from app.logging import setup_logging
 from app.modules.auth.router import router as auth_router
 from app.rate_limit import limiter
+from app.templating import templates
 
 settings = get_settings()
 
@@ -53,6 +56,19 @@ async def validation_handler(request: Request, exc: RequestValidationError) -> J
 
 
 app.include_router(auth_router)
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+@app.get("/")
+def root(request: Request):
+    # Placeholder home page until T42 (today aggregator) lands. Extends base.
+    return templates.TemplateResponse(
+        request=request,
+        name="base.html",
+        context={"active": "today"},
+    )
 
 
 @app.get("/healthz")

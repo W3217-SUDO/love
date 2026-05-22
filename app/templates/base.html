@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ff7a9c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Couple">
+
+  <title>{% block title %}Couple Diary{% endblock %}</title>
+
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <link rel="stylesheet" href="/static/css/theme.css">
+  {% block head_extra %}{% endblock %}
+
+  {# HTMX + Alpine. Using CDN for M1; vendor later. #}
+  <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+  <script src="https://unpkg.com/alpinejs@3.14.7/dist/cdn.min.js" defer></script>
+</head>
+<body>
+  {% block before_content %}{% endblock %}
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block nav %}
+    {% include 'components/nav.html' %}
+  {% endblock %}
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

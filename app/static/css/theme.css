@@ -1,0 +1,205 @@
+/* Couple Diary — Flo pink theme (M1)
+   Source of truth for color/typography/spacing tokens. */
+
+:root {
+  /* Color tokens */
+  --color-bg: #fce7e9;
+  --color-surface: #ffffff;
+  --color-surface-alt: #fff5f7;
+  --color-text: #1a1a2e;
+  --color-text-soft: #6b6b80;
+  --color-accent: #ff7a9c;
+  --color-accent-strong: #d63673;
+  --color-accent-soft: #ffe4ec;
+  --color-success: #34c38f;
+  --color-warn: #f7b955;
+  --color-error: #e74e6e;
+  --color-border: #f1d6dd;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 9999px;
+
+  /* Typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC",
+               "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 6px rgba(255, 150, 180, 0.10);
+  --shadow-md: 0 4px 16px rgba(255, 150, 180, 0.15);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+
+  /* Layout */
+  --nav-height: 64px;
+  --content-max-width: 720px;
+}
+
+/* Reset + base */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+  min-height: 100vh;
+  padding-bottom: var(--nav-height);
+}
+
+h1, h2, h3 { margin: 0 0 var(--space-3); line-height: 1.25; }
+h1 { font-size: 28px; font-weight: 700; }
+h2 { font-size: 22px; font-weight: 700; }
+h3 { font-size: 18px; font-weight: 600; }
+p { margin: 0 0 var(--space-3); }
+a { color: var(--color-accent-strong); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Layout container */
+.container {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: var(--space-4);
+}
+
+/* Card primitives */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+/* Pills (Flo-style tag) */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.1s, background 0.15s;
+}
+.pill:hover { background: #ffd1e0; }
+.pill[aria-pressed="true"] { background: var(--color-accent); color: white; }
+.pill:active { transform: scale(0.96); }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: white;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.15s;
+}
+.btn:hover { background: var(--color-accent-strong); }
+.btn:disabled { background: #ddd; cursor: not-allowed; }
+.btn-secondary { background: var(--color-surface); color: var(--color-accent-strong); border: 1px solid var(--color-border); }
+
+/* Form inputs */
+.input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  font: inherit;
+  background: var(--color-surface);
+}
+.input:focus { outline: 2px solid var(--color-accent); outline-offset: -1px; }
+.input.error { border-color: var(--color-error); }
+.form-row { margin-bottom: var(--space-4); }
+.form-label { display: block; font-size: 13px; color: var(--color-text-soft); margin-bottom: var(--space-1); }
+.form-error { color: var(--color-error); font-size: 13px; margin-top: var(--space-1); }
+
+/* Error states */
+.alert {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: #ffe2e6;
+  color: var(--color-error);
+  margin-bottom: var(--space-4);
+  font-size: 14px;
+}
+
+/* Bottom nav (mobile) */
+.bottom-nav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: var(--nav-height);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 100;
+}
+.bottom-nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--color-text-soft);
+  padding: var(--space-2);
+}
+.bottom-nav a[aria-current="page"] { color: var(--color-accent-strong); }
+
+/* Subtitle / soft text */
+.subtitle { color: var(--color-text-soft); font-size: 14px; }
+
+/* Sheet (mobile-bottom modal) — full Phase C will refine */
+.sheet-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 200;
+}
+.sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-5);
+  z-index: 201;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 720px) {
+  .bottom-nav { /* keep visible on desktop; could later switch to sidebar */ }
+  .sheet {
+    left: 50%; right: auto;
+    bottom: 50%;
+    transform: translate(-50%, 50%);
+    width: 480px;
+    max-width: 90vw;
+    border-radius: var(--radius-lg);
+  }
+}
