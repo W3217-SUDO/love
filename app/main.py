@@ -6,6 +6,7 @@ from sqlalchemy import text
 
 from app.config import get_settings
 from app.db import SessionLocal
+from app.errors import register_exception_handlers
 from app.logging import setup_logging
 
 settings = get_settings()
@@ -24,6 +25,8 @@ app = FastAPI(
     docs_url=None if settings.app_env == "production" else "/docs",
     redoc_url=None,
 )
+
+register_exception_handlers(app)
 
 
 @app.get("/healthz")
