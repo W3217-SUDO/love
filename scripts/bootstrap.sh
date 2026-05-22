@@ -21,8 +21,9 @@ mkdir -p "$APP_DIR" "$DATA_DIR/uploads" "$DATA_DIR/backups/db" "$DATA_DIR/backup
 chmod 700 "$DATA_DIR/uploads" "$DATA_DIR/backups"
 
 echo "== 3. Install OS packages =="
-dnf install -y python3.11 python3.11-pip nginx openssl gcc gcc-c++ python3.11-devel git || \
-  dnf install -y python3 python3-pip nginx openssl gcc gcc-c++ python3-devel git
+# OpenCloudOS's dnf.conf excludes nginx/httpd by default. Use --disableexcludes
+# to bypass that policy for just this install (does NOT modify dnf.conf).
+dnf install -y --disableexcludes=all python3 python3-pip nginx nginx-core nginx-filesystem openssl gcc gcc-c++ python3-devel git
 
 echo "== 4. Clone or update repo =="
 if [ ! -d "$APP_DIR/.git" ]; then
@@ -97,12 +98,19 @@ systemctl enable couple-diary
 systemctl restart couple-diary
 
 echo "== 13. Install nginx config =="
-cp "$APP_DIR/deploy/nginx-couple-diary.conf" /etc/nginx/conf.d/
-# Disable default config if present, otherwise it conflicts on :80
-if [ -f /etc/nginx/nginx.conf ]; then
-    sed -i 's|^\(\s*\)\(server\s*{\)|\1#\2|' /etc/nginx/conf.d/default.conf 2>/dev/null || true
+mkdir -p /etc/nginx/conf.d
+cp "$APP_DIR/deploy/nginx-couple-diary.conf" /etc/nginx/conf.d/couple-diary.conf
+# Disable default site if present (would conflict on :80)
+if [ -f /etc/nginx/conf.d/default.conf ]; then
+    mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.disabled || true
+fi
+# Some OpenCloudOS nginx packages put the default server in nginx.conf itself;
+# comment out the bundled server { ... listen 80 ... } block if it exists.
+if grep -q "listen.*80.*default_server" /etc/nginx/nginx.conf 2>/dev/null; then
+    sed -i.bak '/^\s*server\s*{/,/^\s*}/ s/^/# /' /etc/nginx/nginx.conf || true
 fi
 nginx -t
+systemctl enable nginx
 systemctl reload nginx 2>/dev/null || systemctl restart nginx || systemctl start nginx
 
 echo "== 14. Wait for app to be ready =="
