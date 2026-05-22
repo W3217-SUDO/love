@@ -16,6 +16,7 @@ from app.errors import register_exception_handlers
 from app.logging import setup_logging
 from app.modules.auth.router import router as auth_router
 from app.modules.cycle.router import router as cycle_router
+from app.modules.daily_log.router import router as daily_log_router
 from app.rate_limit import limiter
 from app.templating import templates
 
@@ -81,6 +82,7 @@ async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPE
 
 app.include_router(auth_router)
 app.include_router(cycle_router)
+app.include_router(daily_log_router)
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

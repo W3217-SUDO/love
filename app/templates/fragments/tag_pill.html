@@ -1,0 +1,11 @@
+{# expects: tag (catalog.Tag), active (bool), date (date) #}
+<button type="button"
+        class="pill"
+        aria-pressed="{{ 'true' if active else 'false' }}"
+        data-tag-key="{{ tag.key }}"
+        hx-post="/log/{{ date.isoformat() }}/tag/{{ tag.key }}/toggle"
+        hx-swap="outerHTML"
+        hx-trigger="click">
+  <span aria-hidden="true">{{ tag.emoji }}</span>
+  <span>{{ tag.label }}</span>
+</button>
