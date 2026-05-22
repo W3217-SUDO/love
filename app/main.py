@@ -17,6 +17,8 @@ from app.logging import setup_logging
 from app.modules.auth.router import router as auth_router
 from app.modules.cycle.router import router as cycle_router
 from app.modules.daily_log.router import router as daily_log_router
+from app.modules.media.router import router as media_router
+from app.modules.timeline.router import router as timeline_router
 from app.rate_limit import limiter
 from app.templating import templates
 
@@ -83,6 +85,8 @@ async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPE
 app.include_router(auth_router)
 app.include_router(cycle_router)
 app.include_router(daily_log_router)
+app.include_router(media_router)
+app.include_router(timeline_router)
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -96,16 +100,6 @@ def service_worker():
         SW_PATH,
         media_type="application/javascript",
         headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"},
-    )
-
-
-@app.get("/")
-def root(request: Request):
-    # Placeholder home page until T42 (today aggregator) lands. Extends base.
-    return templates.TemplateResponse(
-        request=request,
-        name="base.html",
-        context={"active": "today"},
     )
 
 
