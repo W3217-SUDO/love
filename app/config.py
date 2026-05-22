@@ -1,3 +1,4 @@
+import functools
 from pathlib import Path
 from typing import Literal
 
@@ -41,5 +42,6 @@ class Settings(BaseSettings):
         return v
 
 
+@functools.cache
 def get_settings() -> Settings:
     return Settings()  # type: ignore[call-arg]
