@@ -76,3 +76,26 @@ class InviteToken(Base):
 
     def __repr__(self) -> str:
         return f"<InviteToken id={self.id} user_id={self.user_id} used={self.used_at is not None}>"
+
+
+class AuthSession(Base):
+    """Server-side session row. The cookie carries the `token` value."""
+    __tablename__ = "sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    token: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False,
+    )
+    ip: Mapped[str | None] = mapped_column(String(45), nullable=True)  # IPv4 or IPv6
+    user_agent: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False,
+    )
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<AuthSession id={self.id} user_id={self.user_id}>"
