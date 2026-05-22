@@ -1,6 +1,4 @@
 """Auth routes: bind, login, logout. JSON API for Phase B."""
-from __future__ import annotations
-
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Cookie, Depends, Query, Request, Response, status
@@ -26,6 +24,7 @@ from app.modules.auth.schemas import (
     UserPublic,
 )
 from app.modules.auth.sessions import create_session, revoke_session
+from app.rate_limit import limiter
 
 
 class InviteExpiredError(AppError):
@@ -96,10 +95,11 @@ def post_bind(
 
 
 @router.post("/login", response_model=LoginResponse)
+@limiter.limit("20/5 minutes")
 def post_login(
-    payload: LoginRequest,
     request: Request,
     response: Response,
+    payload: LoginRequest,
     db: Session = Depends(get_db),
 ) -> LoginResponse:
     user = db.query(User).filter_by(username=payload.username).one_or_none()

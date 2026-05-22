@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 
 from app.config import get_settings
@@ -11,6 +12,7 @@ from app.db import SessionLocal
 from app.errors import register_exception_handlers
 from app.logging import setup_logging
 from app.modules.auth.router import router as auth_router
+from app.rate_limit import limiter
 
 settings = get_settings()
 
@@ -30,6 +32,16 @@ app = FastAPI(
 )
 
 register_exception_handlers(app)
+
+app.state.limiter = limiter
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    return JSONResponse(
+        status_code=429,
+        content={"error": {"code": "rate_limited", "message": "too many requests"}},
+    )
 
 
 @app.exception_handler(RequestValidationError)
