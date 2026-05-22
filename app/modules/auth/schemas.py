@@ -27,3 +27,13 @@ class UserPublic(BaseModel):
 class BindResponse(BaseModel):
     status: str
     user: UserPublic
+
+
+class LoginRequest(BaseModel):
+    username: str = Field(min_length=1, max_length=32)
+    password: str = Field(min_length=1, max_length=256)
+
+
+class LoginResponse(BaseModel):
+    status: str
+    user: UserPublic
