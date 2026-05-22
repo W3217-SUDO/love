@@ -6,15 +6,15 @@ from sqlalchemy import text
 
 from app.config import get_settings
 from app.db import SessionLocal
+from app.logging import setup_logging
 
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # Startup: nothing yet; later tasks add scheduler, etc.
+    setup_logging(level="INFO" if settings.app_env == "production" else "DEBUG")
     yield
-    # Shutdown
 
 
 app = FastAPI(
