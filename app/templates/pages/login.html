@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}登录 · Couple Diary{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 420px; margin: 48px auto;">
+  <h1 style="text-align:center; margin-bottom: var(--space-6)">登录</h1>
+
+  <form id="login-form" action="/login" method="post" data-json-form
+        onsubmit="return false;" novalidate>
+    {% include 'components/csrf.html' %}
+    <div class="form-row">
+      <label class="form-label" for="username">用户名</label>
+      <input class="input" id="username" name="username" type="text"
+             autocomplete="username" required autocapitalize="none"
+             autocorrect="off" spellcheck="false">
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="password">密码</label>
+      <input class="input" id="password" name="password" type="password"
+             autocomplete="current-password" required minlength="1">
+    </div>
+
+    <div class="form-error" id="login-error" hidden>{% if error %}{{ error }}{% endif %}</div>
+
+    <button class="btn" type="submit" style="width:100%">登录</button>
+  </form>
+
+  <p class="subtitle" style="text-align:center; margin-top: var(--space-5)">
+    首次进入？请打开你的邀请链接绑定密码。
+  </p>
+</div>
+{% endblock %}
+{% block nav %}{# no nav on login page #}{% endblock %}
+
+{% block scripts %}
+<script>
+  // Hooks: data-json-form submits as JSON; on 200, navigates to /; on 4xx shows error.
+  document.addEventListener('submit', async (e) => {
+    const form = e.target.closest('form[data-json-form]');
+    if (!form) return;
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form).entries());
+    const errEl = form.querySelector('.form-error');
+    errEl.hidden = true;
+    try {
+      const r = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (r.ok) {
+        window.location.href = '/';
+        return;
+      }
+      const body = await r.json().catch(() => ({}));
+      errEl.textContent = (body.error && body.error.message) || `登录失败 (${r.status})`;
+      errEl.hidden = false;
+    } catch (err) {
+      errEl.textContent = '网络错误，请重试';
+      errEl.hidden = false;
+    }
+  });
+</script>
+{% endblock %}

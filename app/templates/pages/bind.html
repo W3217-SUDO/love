@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}绑定账号 · Couple Diary{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 420px; margin: 48px auto;">
+  <h1 style="text-align:center; margin-bottom: var(--space-3)">欢迎，{{ display_name }}</h1>
+  <p class="subtitle" style="text-align:center; margin-bottom: var(--space-6)">
+    设置你的密码，下次直接登录。
+  </p>
+
+  <form action="/bind" method="post" id="bind-form" novalidate
+        onsubmit="return false;">
+    <input type="hidden" name="token" value="{{ token }}">
+    {% include 'components/csrf.html' %}
+    <div class="form-row">
+      <label class="form-label" for="username">用户名</label>
+      <input class="input" id="username" value="{{ username }}" disabled>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="password">设置密码 (≥8 字符)</label>
+      <input class="input" id="password" name="password" type="password"
+             autocomplete="new-password" required minlength="8" maxlength="256">
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="password_confirm">再输一次</label>
+      <input class="input" id="password_confirm" name="password_confirm" type="password"
+             autocomplete="new-password" required minlength="8">
+    </div>
+
+    <div class="form-error" id="bind-error" hidden></div>
+
+    <button class="btn" type="submit" style="width:100%">完成绑定</button>
+  </form>
+</div>
+{% endblock %}
+{% block nav %}{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('bind-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const data = Object.fromEntries(new FormData(form).entries());
+    const errEl = document.getElementById('bind-error');
+    errEl.hidden = true;
+    if (data.password !== data.password_confirm) {
+      errEl.textContent = '两次密码不一致';
+      errEl.hidden = false;
+      return;
+    }
+    delete data.password_confirm;
+    try {
+      const r = await fetch('/bind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const body = await r.json().catch(() => ({}));
+      if (r.ok) {
+        // Render the success view inline by navigating to a query-string marker.
+        document.body.innerHTML = '<div class="container"><div class="card" style="max-width:420px;margin:48px auto;text-align:center;"><h1>绑定成功 ✓</h1><p class="subtitle">现在你可以用刚设置的密码登录。</p><a class="btn" href="/login">去登录</a></div></div>';
+      } else {
+        errEl.textContent = (body.error && body.error.message) || `绑定失败 (${r.status})`;
+        errEl.hidden = false;
+      }
+    } catch {
+      errEl.textContent = '网络错误，请重试';
+      errEl.hidden = false;
+    }
+  });
+</script>
+{% endblock %}

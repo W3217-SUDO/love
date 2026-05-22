@@ -1,7 +1,8 @@
-"""Auth routes: bind, login, logout. JSON API for Phase B."""
+"""Auth routes: bind, login, logout. JSON API + HTML pages for Phase B."""
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Cookie, Depends, Query, Request, Response, status
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from app.config import get_settings as get_settings_for_router
@@ -17,7 +18,6 @@ from app.modules.auth.models import InviteToken, User
 from app.modules.auth.passwords import InvalidHashError, verify_password
 from app.modules.auth.schemas import (
     BindInfo,
-    BindRequest,
     BindResponse,
     LoginRequest,
     LoginResponse,
@@ -25,6 +25,7 @@ from app.modules.auth.schemas import (
 )
 from app.modules.auth.sessions import create_session, revoke_session
 from app.rate_limit import limiter
+from app.templating import templates
 
 
 class InviteExpiredError(AppError):
@@ -40,22 +41,67 @@ class InviteAlreadyUsedError(AppError):
 router = APIRouter(tags=["auth"])
 
 
-@router.get("/bind", response_model=BindInfo)
+def _wants_html(request: Request) -> bool:
+    """True iff the client explicitly accepts text/html.
+
+    We don't treat `*/*` (the default) as HTML — programmatic clients (curl,
+    TestClient) send `*/*` and should keep getting JSON.
+    """
+    return "text/html" in request.headers.get("accept", "")
+
+
+@router.get("/login", response_class=HTMLResponse)
+def get_login(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request=request, name="pages/login.html", context={},
+    )
+
+
+@router.get("/bind")
 def get_bind_info(
+    request: Request,
     token: str = Query(..., min_length=1),
     db: Session = Depends(get_db),
-) -> BindInfo:
+):
     row = db.query(InviteToken).filter_by(token=token).one_or_none()
     if row is None:
+        if _wants_html(request):
+            return templates.TemplateResponse(
+                request=request, name="pages/login.html",
+                context={"error": "invite token not found"},
+                status_code=404,
+            )
         raise NotFound("invite token not found")
     if row.used_at is not None:
+        if _wants_html(request):
+            return templates.TemplateResponse(
+                request=request, name="pages/login.html",
+                context={"error": "invite token already used"},
+                status_code=409,
+            )
         raise InviteAlreadyUsedError("invite token has already been used")
     expires_at = row.expires_at
     if expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
     if expires_at < datetime.now(timezone.utc):
+        if _wants_html(request):
+            return templates.TemplateResponse(
+                request=request, name="pages/login.html",
+                context={"error": "invite token expired"},
+                status_code=410,
+            )
         raise InviteExpiredError("invite token has expired")
     user = db.query(User).filter_by(id=row.user_id).one()
+    if _wants_html(request):
+        return templates.TemplateResponse(
+            request=request, name="pages/bind.html",
+            context={
+                "token": token,
+                "username": user.username,
+                "display_name": user.display_name,
+                "role": user.role,
+            },
+        )
     return BindInfo(
         token=token,
         username=user.username,
@@ -64,25 +110,72 @@ def get_bind_info(
     )
 
 
-@router.post("/bind", response_model=BindResponse)
-def post_bind(
-    payload: BindRequest,
+@router.post("/bind")
+async def post_bind(
+    request: Request,
     db: Session = Depends(get_db),
-) -> BindResponse:
+):
+    # Accept either JSON body or form-encoded body.
+    content_type = request.headers.get("content-type", "")
+    if content_type.startswith("application/json"):
+        body = await request.json()
+        token = body.get("token", "") if isinstance(body, dict) else ""
+        password = body.get("password", "") if isinstance(body, dict) else ""
+    else:
+        form = await request.form()
+        token = form.get("token", "")
+        password = form.get("password", "")
+
+    if not token or not password or len(password) < 8:
+        if _wants_html(request):
+            return templates.TemplateResponse(
+                request=request, name="pages/login.html",
+                context={"error": "invalid token or password too short"},
+                status_code=422,
+            )
+        raise ValidationFailed("invalid token or password too short")
+
     try:
-        user = redeem_invite(
-            db, token=payload.token, plain_password=payload.password,
-        )
+        user = redeem_invite(db, token=token, plain_password=password)
         db.commit()
     except InviteNotFound as exc:
+        if _wants_html(request):
+            return templates.TemplateResponse(
+                request=request, name="pages/login.html",
+                context={"error": str(exc)},
+                status_code=404,
+            )
         raise NotFound(str(exc)) from exc
     except InviteAlreadyUsed as exc:
+        if _wants_html(request):
+            return templates.TemplateResponse(
+                request=request, name="pages/login.html",
+                context={"error": str(exc)},
+                status_code=409,
+            )
         raise InviteAlreadyUsedError(str(exc)) from exc
     except InviteExpired as exc:
+        if _wants_html(request):
+            return templates.TemplateResponse(
+                request=request, name="pages/login.html",
+                context={"error": str(exc)},
+                status_code=410,
+            )
         raise InviteExpiredError(str(exc)) from exc
-    except ValueError as exc:  # password too short etc.
+    except ValueError as exc:
+        if _wants_html(request):
+            return templates.TemplateResponse(
+                request=request, name="pages/login.html",
+                context={"error": str(exc)},
+                status_code=422,
+            )
         raise ValidationFailed(str(exc)) from exc
 
+    if _wants_html(request):
+        return templates.TemplateResponse(
+            request=request, name="pages/bind_success.html",
+            context={"display_name": user.display_name},
+        )
     return BindResponse(
         status="ok",
         user=UserPublic(
