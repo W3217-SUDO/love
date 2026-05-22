@@ -1,0 +1,24 @@
+[Unit]
+Description=Couple Diary App
+After=network.target mariadb.service
+
+[Service]
+Type=simple
+User=couple
+Group=couple
+WorkingDirectory=/opt/couple_diary
+EnvironmentFile=/opt/couple_diary/.env.production
+ExecStart=/opt/couple_diary/.venv/bin/uvicorn app.main:app \
+    --host 127.0.0.1 --port 8000 --workers 2 --proxy-headers
+Restart=on-failure
+RestartSec=5
+MemoryMax=600M
+TasksMax=200
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/data /var/log/couple_diary
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

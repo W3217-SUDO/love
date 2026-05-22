@@ -1,0 +1,4 @@
+# Drop into /etc/my.cnf.d/ to lock MariaDB to localhost.
+# Apply with: systemctl restart mariadb
+[mysqld]
+bind-address = 127.0.0.1

@@ -20,6 +20,7 @@ from app.modules.daily_log.router import router as daily_log_router
 from app.modules.media.router import router as media_router
 from app.modules.timeline.router import router as timeline_router
 from app.rate_limit import limiter
+from app.scheduler import start_scheduler, stop_scheduler
 from app.templating import templates
 
 settings = get_settings()
@@ -32,7 +33,13 @@ def _wants_html(request: Request) -> bool:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     setup_logging(level="INFO" if settings.app_env == "production" else "DEBUG")
-    yield
+    if settings.app_env == "production":
+        start_scheduler()
+    try:
+        yield
+    finally:
+        if settings.app_env == "production":
+            stop_scheduler()
 
 
 app = FastAPI(
