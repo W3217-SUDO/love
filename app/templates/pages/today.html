@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}今天 · Couple Diary{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>今天 · {{ date.isoformat() }}</h1>
+  <p class="subtitle">{{ greeting }}, {{ user.display_name }}</p>
+</div>
+
+{% include 'fragments/cycle_ring.html' with context %}
+
+{% include 'fragments/predictor_card.html' with context %}
+
+{% include 'fragments/partner_card.html' with context %}
+
+<div class="card">
+  <h3>今天的标签</h3>
+  {% if active_tags %}
+    <div style="display:flex; flex-wrap:wrap; gap: var(--space-2); margin-bottom: var(--space-3);">
+      {% for tag in active_tags %}
+        <span class="pill" aria-pressed="true">{{ tag.label }}</span>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="subtitle">还没有打卡</p>
+  {% endif %}
+  <a class="btn" href="/log/{{ date.isoformat() }}">打开标签 sheet ➕</a>
+</div>
+
+<div class="card">
+  <h3>📈 基础体温（最近 7 天）</h3>
+  {% if recent_bbt %}
+    <ul style="list-style:none; padding:0; margin:0;">
+      {% for r in recent_bbt %}
+        <li style="display:flex; justify-content:space-between; padding: var(--space-2) 0; border-bottom:1px solid var(--color-border);">
+          <span class="subtitle">{{ r.date.isoformat() }}</span>
+          <strong>{{ r.temp_c }} ℃</strong>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="subtitle">还没有记录基础体温</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}我们 · Couple Diary{% endblock %}
+{% block content %}
+<div class="card" style="text-align:center;">
+  <h1>我们</h1>
+  {% if days_together is not none %}
+    <p style="font-size:48px; font-weight:700; color:var(--color-accent-strong); margin: var(--space-4) 0;">
+      {{ days_together }}
+    </p>
+    <p class="subtitle">天</p>
+  {% endif %}
+  <div style="display:flex; justify-content:space-around; margin-top: var(--space-6);">
+    <div>
+      <p style="font-weight:700; font-size:18px;">{{ you.display_name }}</p>
+      <p class="subtitle">你</p>
+    </div>
+    {% if partner %}
+      <div>
+        <p style="font-weight:700; font-size:18px;">{{ partner.display_name }}</p>
+        <p class="subtitle">TA</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h3>账号</h3>
+  <p class="subtitle">用户名：{{ you.username }}</p>
+  <p class="subtitle">角色：{{ you.role }}</p>
+  <form action="/logout" method="post" style="margin-top: var(--space-4);">
+    <button type="submit" class="btn-secondary" style="width:100%">退出登录</button>
+  </form>
+</div>
+{% endblock %}

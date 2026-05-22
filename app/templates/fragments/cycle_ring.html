@@ -1,0 +1,12 @@
+{# expects: cycle_day (int), phase_label (str), phase_color (str hex), ring_progress (int) #}
+<div style="text-align:center; padding: var(--space-4);">
+  <svg viewBox="0 0 160 160" width="160" height="160" aria-hidden="true">
+    <circle cx="80" cy="80" r="68" fill="none" stroke="var(--color-accent-soft)" stroke-width="10"/>
+    <circle cx="80" cy="80" r="68" fill="none" stroke="{{ phase_color }}" stroke-width="10"
+            stroke-dasharray="{{ ring_progress }} 427"
+            stroke-linecap="round"
+            transform="rotate(-90 80 80)"/>
+    <text x="80" y="78" text-anchor="middle" font-size="36" font-weight="700" fill="var(--color-text)">D{{ cycle_day }}</text>
+    <text x="80" y="108" text-anchor="middle" font-size="13" fill="var(--color-text-soft)">{{ phase_label }}</text>
+  </svg>
+</div>

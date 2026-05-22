@@ -1,0 +1,23 @@
+{# expects: partner (User or None), partner_tags (list), partner_phase (str) #}
+<div class="card" id="partner-card"
+     hx-get="/today/partner-card"
+     hx-trigger="every 30s [document.visibilityState==='visible']"
+     hx-swap="outerHTML">
+  {% if partner %}
+    <h3>{{ partner.display_name }} 的今天</h3>
+    {% if partner_phase %}
+      <p class="subtitle">{{ partner_phase }}</p>
+    {% endif %}
+    {% if partner_tags %}
+      <div style="display:flex; flex-wrap:wrap; gap: var(--space-2); margin-top: var(--space-2);">
+        {% for tag in partner_tags %}
+          <span class="pill" aria-pressed="true">{{ tag.label }}</span>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="subtitle">今天还没有打卡</p>
+    {% endif %}
+  {% else %}
+    <p class="subtitle">尚未绑定伴侣</p>
+  {% endif %}
+</div>

@@ -1,0 +1,28 @@
+{# expects: prediction (CyclePrediction or dict-like) #}
+<div class="card" id="predictor-card"
+     hx-get="/today/predictor-card"
+     hx-trigger="every 60s [document.visibilityState==='visible']"
+     hx-swap="outerHTML">
+  <h3>🎯 排卵预测</h3>
+  {% if prediction.phase == "unknown" %}
+    <p class="subtitle">数据不足，需要至少 2 个完整经期</p>
+  {% else %}
+    {% if prediction.ovulation %}
+      <p>预计排卵：<strong>{{ prediction.ovulation.isoformat() }}</strong></p>
+    {% endif %}
+    {% if prediction.next_period %}
+      <p class="subtitle">下次经期：{{ prediction.next_period.isoformat() }}</p>
+    {% endif %}
+    <p class="subtitle">阶段：{{ prediction.phase }} · 置信度 {{ prediction.confidence_level }}</p>
+    {% if prediction.evidence %}
+      <details style="margin-top: var(--space-2);">
+        <summary class="subtitle" style="cursor:pointer;">查看依据</summary>
+        <ul style="font-size:13px; color:var(--color-text-soft); padding-left:var(--space-5); margin-top:var(--space-2);">
+          {% for e in prediction.evidence %}
+            <li>{{ e.source }}{% if e.active %} ✓{% else %} ✗{% endif %} — {{ e.evidence }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+  {% endif %}
+</div>
