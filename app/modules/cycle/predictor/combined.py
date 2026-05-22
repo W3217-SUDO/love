@@ -1,6 +1,6 @@
 """Combined predictor: merges signals into a single CyclePrediction.
 
-M1 implements Calendar + BBT. Future: LH, Mucus, RHR/HRV per spec section 7.1.
+M1 implements Calendar + BBT + LH. Future: Mucus, RHR/HRV per spec section 7.1.
 """
 from datetime import date
 
@@ -14,6 +14,7 @@ from app.modules.cycle.predictor.base import (
 )
 from app.modules.cycle.predictor.bbt import BBTSignal
 from app.modules.cycle.predictor.calendar import CalendarSignal
+from app.modules.cycle.predictor.lh import LHSignal
 
 
 def _confidence_level(score: float) -> ConfidenceLevel:
@@ -29,8 +30,9 @@ class CombinedPredictor:
 
     def __init__(self, signals: list[Signal] | None = None) -> None:
         self.signals: list[Signal] = signals if signals is not None else [
-            BBTSignal(),       # post-hoc ovulation lock
-            CalendarSignal(),  # baseline projection
+            LHSignal(),         # highest priority -- real-time
+            BBTSignal(),        # post-hoc lock
+            CalendarSignal(),   # baseline
         ]
 
     def predict(
@@ -58,17 +60,23 @@ class CombinedPredictor:
                 evidence=results,
             )
 
-        # Merge: start with calendar (if active) for next_period, override
-        # ovulation with BBT (if active) for high-confidence post-hoc lock.
-        cal = next((r for r in active if r.source == "calendar"), None)
+        # Merge: priority LH > BBT > Calendar.
+        lh = next((r for r in active if r.source == "lh"), None)
         bbt = next((r for r in active if r.source == "bbt"), None)
+        cal = next((r for r in active if r.source == "calendar"), None)
 
         next_period = cal.predicted_next_period if cal else None
-        ovulation = (bbt.predicted_ovulation if bbt
-                     else (cal.predicted_ovulation if cal else None))
+        ovulation = (
+            lh.predicted_ovulation if lh
+            else (bbt.predicted_ovulation if bbt
+                  else (cal.predicted_ovulation if cal else None))
+        )
         fertile_window = cal.fertile_window if cal else None
-        phase = (bbt.phase if bbt
-                 else (cal.phase if cal else "unknown"))
+        phase = (
+            lh.phase if lh
+            else (bbt.phase if bbt
+                  else (cal.phase if cal else "unknown"))
+        )
 
         confidence_score = max(r.confidence for r in active)
         return CyclePrediction(

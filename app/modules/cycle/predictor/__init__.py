@@ -8,6 +8,7 @@ from app.modules.cycle.predictor.base import (
 from app.modules.cycle.predictor.bbt import BBTSignal
 from app.modules.cycle.predictor.calendar import CalendarSignal
 from app.modules.cycle.predictor.combined import CombinedPredictor
+from app.modules.cycle.predictor.lh import LHSignal
 
 __all__ = [
     "BBTSignal",
@@ -15,6 +16,7 @@ __all__ = [
     "CombinedPredictor",
     "ConfidenceLevel",
     "CyclePrediction",
+    "LHSignal",
     "Signal",
     "SignalResult",
 ]

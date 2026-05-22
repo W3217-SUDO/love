@@ -27,12 +27,9 @@ from app.modules.daily_log.service import (
     toggle_tag,
 )
 from app.templating import templates
+from app.util.http import wants_html
 
 router = APIRouter(tags=["daily_log"])
-
-
-def _wants_html(request: Request) -> bool:
-    return "text/html" in request.headers.get("accept", "")
 
 
 @router.get("/log/today")
@@ -62,7 +59,7 @@ def get_log_for_date(
     active_keys = {t.tag_key for t in active_tags}
 
     # JSON response for programmatic clients
-    if not _wants_html(request):
+    if not wants_html(request):
         return {
             "date": day.isoformat(),
             "tags": [DailyTagOut.model_validate(t).model_dump() for t in active_tags],
@@ -103,7 +100,7 @@ def post_toggle_tag(
     except UnknownTagError as exc:
         raise NotFound(str(exc)) from exc
 
-    if _wants_html(request):
+    if wants_html(request):
         tag = TAG_BY_KEY[tag_key]
         return templates.TemplateResponse(
             request=request,

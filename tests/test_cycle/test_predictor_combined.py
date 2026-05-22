@@ -63,3 +63,25 @@ def test_combined_evidence_includes_all_signals(db):
     sources = {e.source for e in pred.evidence}
     assert "calendar" in sources
     assert "bbt" in sources  # included even when inactive
+
+
+def test_combined_lh_overrides_bbt_and_calendar(db):
+    from decimal import Decimal
+    from app.modules.cycle.service import log_bbt
+    u = _user(db)
+    _seed_cycles(db, u.id, [date(2026, 4, 1), date(2026, 4, 29)], length=5)
+    # BBT pattern that would indicate ovulation around May 6
+    temps = ["36.40", "36.35", "36.40", "36.30", "36.35", "36.40", "36.65", "36.60", "36.70"]
+    for i, t in enumerate(temps):
+        log_bbt(db, user_id=u.id, date=date(2026, 5, 1) + timedelta(days=i), temp_c=Decimal(t))
+        db.flush()
+    # LH+ on May 12 -- should take priority
+    from app.modules.daily_log.service import toggle_tag
+    toggle_tag(db, user_id=u.id, date=date(2026, 5, 12), tag_key="ovu_positive")
+    db.flush()
+    pred = CombinedPredictor().predict(db, user_id=u.id, target_date=date(2026, 5, 12))
+    # LH says ovulation = LH+ day + 1 = May 13
+    assert pred.ovulation == date(2026, 5, 13)
+    assert pred.confidence_level == "high"
+    lh_evidence = [e for e in pred.evidence if e.source == "lh"]
+    assert lh_evidence and lh_evidence[0].active is True

@@ -22,12 +22,9 @@ from app.modules.timeline.router import router as timeline_router
 from app.rate_limit import limiter
 from app.scheduler import start_scheduler, stop_scheduler
 from app.templating import templates
+from app.util.http import wants_html
 
 settings = get_settings()
-
-
-def _wants_html(request: Request) -> bool:
-    return "text/html" in request.headers.get("accept", "")
 
 
 @asynccontextmanager
@@ -73,7 +70,7 @@ async def validation_handler(request: Request, exc: RequestValidationError) -> J
 
 @app.exception_handler(StarletteHTTPException)
 async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPException):
-    if _wants_html(request):
+    if wants_html(request):
         template_name = {
             404: "pages/404.html",
             403: "pages/403.html",

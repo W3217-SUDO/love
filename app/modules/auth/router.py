@@ -26,6 +26,7 @@ from app.modules.auth.schemas import (
 from app.modules.auth.sessions import create_session, revoke_session
 from app.rate_limit import limiter
 from app.templating import templates
+from app.util.http import wants_html
 
 
 class InviteExpiredError(AppError):
@@ -39,15 +40,6 @@ class InviteAlreadyUsedError(AppError):
 
 
 router = APIRouter(tags=["auth"])
-
-
-def _wants_html(request: Request) -> bool:
-    """True iff the client explicitly accepts text/html.
-
-    We don't treat `*/*` (the default) as HTML — programmatic clients (curl,
-    TestClient) send `*/*` and should keep getting JSON.
-    """
-    return "text/html" in request.headers.get("accept", "")
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -65,7 +57,7 @@ def get_bind_info(
 ):
     row = db.query(InviteToken).filter_by(token=token).one_or_none()
     if row is None:
-        if _wants_html(request):
+        if wants_html(request):
             return templates.TemplateResponse(
                 request=request, name="pages/login.html",
                 context={"error": "invite token not found"},
@@ -73,7 +65,7 @@ def get_bind_info(
             )
         raise NotFound("invite token not found")
     if row.used_at is not None:
-        if _wants_html(request):
+        if wants_html(request):
             return templates.TemplateResponse(
                 request=request, name="pages/login.html",
                 context={"error": "invite token already used"},
@@ -84,7 +76,7 @@ def get_bind_info(
     if expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
     if expires_at < datetime.now(timezone.utc):
-        if _wants_html(request):
+        if wants_html(request):
             return templates.TemplateResponse(
                 request=request, name="pages/login.html",
                 context={"error": "invite token expired"},
@@ -92,7 +84,7 @@ def get_bind_info(
             )
         raise InviteExpiredError("invite token has expired")
     user = db.query(User).filter_by(id=row.user_id).one()
-    if _wants_html(request):
+    if wants_html(request):
         return templates.TemplateResponse(
             request=request, name="pages/bind.html",
             context={
@@ -127,7 +119,7 @@ async def post_bind(
         password = form.get("password", "")
 
     if not token or not password or len(password) < 8:
-        if _wants_html(request):
+        if wants_html(request):
             return templates.TemplateResponse(
                 request=request, name="pages/login.html",
                 context={"error": "invalid token or password too short"},
@@ -139,7 +131,7 @@ async def post_bind(
         user = redeem_invite(db, token=token, plain_password=password)
         db.commit()
     except InviteNotFound as exc:
-        if _wants_html(request):
+        if wants_html(request):
             return templates.TemplateResponse(
                 request=request, name="pages/login.html",
                 context={"error": str(exc)},
@@ -147,7 +139,7 @@ async def post_bind(
             )
         raise NotFound(str(exc)) from exc
     except InviteAlreadyUsed as exc:
-        if _wants_html(request):
+        if wants_html(request):
             return templates.TemplateResponse(
                 request=request, name="pages/login.html",
                 context={"error": str(exc)},
@@ -155,7 +147,7 @@ async def post_bind(
             )
         raise InviteAlreadyUsedError(str(exc)) from exc
     except InviteExpired as exc:
-        if _wants_html(request):
+        if wants_html(request):
             return templates.TemplateResponse(
                 request=request, name="pages/login.html",
                 context={"error": str(exc)},
@@ -163,7 +155,7 @@ async def post_bind(
             )
         raise InviteExpiredError(str(exc)) from exc
     except ValueError as exc:
-        if _wants_html(request):
+        if wants_html(request):
             return templates.TemplateResponse(
                 request=request, name="pages/login.html",
                 context={"error": str(exc)},
@@ -171,7 +163,7 @@ async def post_bind(
             )
         raise ValidationFailed(str(exc)) from exc
 
-    if _wants_html(request):
+    if wants_html(request):
         return templates.TemplateResponse(
             request=request, name="pages/bind_success.html",
             context={"display_name": user.display_name},
