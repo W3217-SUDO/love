@@ -4,10 +4,11 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import get_settings
 from app.db import SessionLocal
@@ -18,6 +19,10 @@ from app.rate_limit import limiter
 from app.templating import templates
 
 settings = get_settings()
+
+
+def _wants_html(request: Request) -> bool:
+    return "text/html" in request.headers.get("accept", "")
 
 
 @asynccontextmanager
@@ -55,10 +60,39 @@ async def validation_handler(request: Request, exc: RequestValidationError) -> J
     )
 
 
+@app.exception_handler(StarletteHTTPException)
+async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if _wants_html(request):
+        template_name = {
+            404: "pages/404.html",
+            403: "pages/403.html",
+        }.get(exc.status_code, "pages/500.html")
+        return templates.TemplateResponse(
+            request=request, name=template_name,
+            context={"message": exc.detail},
+            status_code=exc.status_code,
+        )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": {"code": "http_error", "message": str(exc.detail)}},
+    )
+
+
 app.include_router(auth_router)
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+SW_PATH = STATIC_DIR / "sw.js"
+
+
+@app.get("/sw.js")
+def service_worker():
+    return FileResponse(
+        SW_PATH,
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"},
+    )
 
 
 @app.get("/")

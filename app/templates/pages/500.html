@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}500 · Couple Diary{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 480px; margin: 64px auto; text-align: center;">
+  <div style="font-size: 72px; line-height: 1;">🛠️</div>
+  <h1 style="margin-top: var(--space-4)">出错了</h1>
+  <p class="subtitle">{{ message or "服务器开小差了，稍后再试。" }}</p>
+  <a class="btn" href="/" style="margin-top: var(--space-5); display: inline-block;">回到主页</a>
+</div>
+{% endblock %}
+{% block nav %}{% endblock %}

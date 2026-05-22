@@ -59,11 +59,26 @@ class StorageError(AppError):
 
 
 def register_exception_handlers(app: FastAPI) -> None:
+    from fastapi.responses import HTMLResponse
+    from app.templating import templates  # local import to avoid circular
+
     @app.exception_handler(AppError)
-    async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
+    async def app_error_handler(request: Request, exc: AppError) -> JSONResponse | HTMLResponse:
         log.warning("app_error", extra={
             "code": exc.code, "path": request.url.path, "error_msg": exc.message,
         })
+        wants_html = "text/html" in request.headers.get("accept", "")
+        if wants_html:
+            # Map common statuses to dedicated templates.
+            template_name = {
+                404: "pages/404.html",
+                403: "pages/403.html",
+            }.get(exc.http_status, "pages/500.html")
+            return templates.TemplateResponse(
+                request=request, name=template_name,
+                context={"message": exc.message},
+                status_code=exc.http_status,
+            )
         return JSONResponse(
             status_code=exc.http_status,
             content={"error": {"code": exc.code, "message": exc.message}},
