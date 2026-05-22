@@ -1,13 +1,16 @@
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.config import get_settings
 from app.db import SessionLocal
 from app.errors import register_exception_handlers
 from app.logging import setup_logging
+from app.modules.auth.router import router as auth_router
 
 settings = get_settings()
 
@@ -27,6 +30,17 @@ app = FastAPI(
 )
 
 register_exception_handlers(app)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    return JSONResponse(
+        status_code=422,
+        content={"error": {"code": "validation_failed", "message": str(exc.errors())}},
+    )
+
+
+app.include_router(auth_router)
 
 
 @app.get("/healthz")
