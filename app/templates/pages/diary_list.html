@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}日记 · Couple Diary{% endblock %}
+{% block content %}
+<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+  <h1 style="margin:0;">日记</h1>
+  <a class="btn" href="/diary/new">+ 写一篇</a>
+</div>
+
+{% if entries %}
+  {% for e in entries %}
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom: var(--space-2);">
+        <div>
+          {% if e.title %}<h2 style="margin:0 0 var(--space-1);"><a href="/diary/{{ e.id }}" style="color:var(--color-text);">{{ e.title }}</a></h2>{% endif %}
+          <p class="subtitle" style="margin:0;">
+            {{ e.author_name }} · {{ e.date.isoformat() }}
+            {% if e.visibility == 'private' %}· 🔒 私密{% endif %}
+          </p>
+        </div>
+      </div>
+      <p style="margin:0; color:var(--color-text); white-space: pre-line;">{{ e.body_excerpt }}</p>
+      {% if e.cover_thumb_url %}
+        <img src="{{ e.cover_thumb_url }}" alt="" style="margin-top: var(--space-3); width:100%; max-width:240px; border-radius: var(--radius-md);">
+      {% endif %}
+      <a href="/diary/{{ e.id }}" class="subtitle" style="display:inline-block; margin-top: var(--space-2);">阅读全文 →</a>
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="card" style="text-align:center; padding: var(--space-8);">
+    <p class="subtitle">还没有日记。</p>
+    <a class="btn" href="/diary/new" style="margin-top: var(--space-4);">写第一篇 💗</a>
+  </div>
+{% endif %}
+{% endblock %}

@@ -2,4 +2,5 @@
 from app.modules import auth  # noqa: F401
 from app.modules import cycle  # noqa: F401
 from app.modules import daily_log  # noqa: F401
+from app.modules import diary  # noqa: F401
 from app.modules import media  # noqa: F401

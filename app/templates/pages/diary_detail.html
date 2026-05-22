@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ entry.title or entry.date.isoformat() }} · 日记{% endblock %}
+{% block content %}
+<div class="card">
+  <p class="subtitle" style="margin-bottom: var(--space-1);">
+    {{ author_name }} · {{ entry.date.isoformat() }}
+    {% if entry.visibility == 'private' %}· 🔒 私密{% endif %}
+  </p>
+  {% if entry.title %}<h1 style="margin: 0 0 var(--space-4);">{{ entry.title }}</h1>{% endif %}
+  <div style="white-space: pre-line; color: var(--color-text); line-height: 1.7;">{{ entry.body }}</div>
+</div>
+
+{% if media_list %}
+  <div class="card">
+    <h3>图片</h3>
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-2);">
+      {% for link, m in media_list %}
+        <a href="{{ m.preview_url }}" target="_blank" style="display:block;">
+          <img src="{{ m.thumb_url }}" alt="{{ link.caption or '' }}"
+               style="width:100%; aspect-ratio:1; object-fit:cover; border-radius: var(--radius-md);">
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+{% if is_author %}
+  <div class="card" style="display:flex; gap: var(--space-3);">
+    <a class="btn-secondary" href="/diary/{{ entry.id }}/edit" style="flex:1; text-align:center;">编辑</a>
+    <form action="/diary/{{ entry.id }}/delete" method="post" style="flex:1;"
+          onsubmit="return confirm('确认删除这篇日记？');">
+      <button class="btn-secondary" type="submit" style="width:100%; color:var(--color-error);">删除</button>
+    </form>
+  </div>
+{% endif %}
+{% endblock %}

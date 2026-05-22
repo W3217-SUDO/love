@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑' if entry else '写日记' }} · Couple Diary{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>{{ '编辑' if entry else '写一篇日记' }}</h1>
+  <form action="{{ '/diary/' ~ entry.id if entry else '/diary' }}" method="post" enctype="multipart/form-data" id="diary-form">
+    <div class="form-row">
+      <label class="form-label" for="title">标题（可选）</label>
+      <input class="input" id="title" name="title" type="text" value="{{ entry.title or '' if entry else '' }}" maxlength="120">
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="body">内容</label>
+      <textarea class="input" id="body" name="body" rows="10" required>{{ entry.body if entry else '' }}</textarea>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="visibility">谁能看</label>
+      <select class="input" id="visibility" name="visibility">
+        <option value="shared" {% if entry and entry.visibility == 'shared' %}selected{% endif %}>双方都可见</option>
+        <option value="private" {% if entry and entry.visibility == 'private' %}selected{% endif %}>仅自己可见</option>
+      </select>
+    </div>
+    <button class="btn" type="submit" style="width:100%;">{{ '保存' if entry else '发表' }}</button>
+  </form>
+
+  {% if entry %}
+    <div style="margin-top: var(--space-6);">
+      <h3>图片</h3>
+      {% if media_list %}
+        <div style="display:flex; flex-wrap:wrap; gap: var(--space-2); margin-bottom: var(--space-3);">
+          {% for link, m in media_list %}
+            <div style="position:relative;">
+              <img src="{{ m.thumb_url }}" alt="" style="width:80px; height:80px; object-fit:cover; border-radius:var(--radius-sm);">
+              <form action="/diary/{{ entry.id }}/media/{{ m.id }}/delete" method="post"
+                    style="position:absolute; top:-6px; right:-6px;">
+                <button type="submit" style="background:white; border:1px solid var(--color-border); border-radius:50%; width:20px; height:20px; cursor:pointer; font-size:12px;">×</button>
+              </form>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <form id="upload-form" enctype="multipart/form-data">
+        <input class="input" type="file" name="file" accept="image/*" id="media-file">
+        <button type="button" class="btn-secondary" onclick="uploadMedia()" style="margin-top: var(--space-2);">上传图片</button>
+      </form>
+    </div>
+  {% endif %}
+</div>
+
+{% if entry %}
+<script>
+async function uploadMedia() {
+  const fileInput = document.getElementById('media-file');
+  const file = fileInput.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  const up = await fetch('/media/upload', { method: 'POST', body: fd });
+  if (!up.ok) { alert('上传失败'); return; }
+  const m = await up.json();
+  const attach = await fetch('/diary/{{ entry.id }}/media', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ media_id: m.id }),
+  });
+  if (attach.ok) {
+    location.reload();
+  } else {
+    alert('关联失败');
+  }
+}
+</script>
+{% endif %}
+{% endblock %}
