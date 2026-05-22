@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     CheckConstraint,
-    DateTime,
+    Date, DateTime,
     ForeignKey,
     String,
     UniqueConstraint,
@@ -52,6 +52,7 @@ class Couple(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False,
     )
     bonded_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    anniversary: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False,
     )

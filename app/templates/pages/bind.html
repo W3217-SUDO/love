@@ -1,20 +1,38 @@
 {% extends "base.html" %}
 {% block title %}绑定账号 · Couple Diary{% endblock %}
 {% block content %}
-<div class="card" style="max-width: 420px; margin: 48px auto;">
-  <h1 style="text-align:center; margin-bottom: var(--space-3)">欢迎，{{ display_name }}</h1>
+<div class="card" style="max-width: 460px; margin: 48px auto;">
+  <h1 style="text-align:center; margin-bottom: var(--space-3)">设置你的账号</h1>
   <p class="subtitle" style="text-align:center; margin-bottom: var(--space-6)">
-    设置你的密码，下次直接登录。
+    自己挑用户名、显示名和身份，再设密码就完成绑定。
   </p>
 
   <form action="/bind" method="post" id="bind-form" novalidate
         onsubmit="return false;">
     <input type="hidden" name="token" value="{{ token }}">
-    {% include 'components/csrf.html' %}
+    {% include "components/csrf.html" %}
+
     <div class="form-row">
-      <label class="form-label" for="username">用户名</label>
-      <input class="input" id="username" value="{{ username }}" disabled>
+      <label class="form-label" for="username">用户名（登录用，3-32 位英文/数字/下划线）</label>
+      <input class="input" id="username" name="username"
+             value="{{ username }}" required minlength="3" maxlength="32"
+             pattern="[a-zA-Z0-9_]+" autocomplete="username">
     </div>
+
+    <div class="form-row">
+      <label class="form-label" for="display_name">显示名（界面上称呼你的方式）</label>
+      <input class="input" id="display_name" name="display_name"
+             value="{{ display_name }}" required minlength="1" maxlength="64">
+    </div>
+
+    <div class="form-row">
+      <label class="form-label" for="role">身份</label>
+      <select class="input" id="role" name="role" required>
+        <option value="she" {% if role == "she" %}selected{% endif %}>女生 / 她</option>
+        <option value="he"  {% if role == "he"  %}selected{% endif %}>男生 / 他</option>
+      </select>
+    </div>
+
     <div class="form-row">
       <label class="form-label" for="password">设置密码 (≥8 字符)</label>
       <input class="input" id="password" name="password" type="password"
@@ -36,34 +54,34 @@
 
 {% block scripts %}
 <script>
-  document.getElementById('bind-form').addEventListener('submit', async (e) => {
+  document.getElementById("bind-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const form = e.target;
     const data = Object.fromEntries(new FormData(form).entries());
-    const errEl = document.getElementById('bind-error');
+    const errEl = document.getElementById("bind-error");
     errEl.hidden = true;
     if (data.password !== data.password_confirm) {
-      errEl.textContent = '两次密码不一致';
+      errEl.textContent = "两次密码不一致";
       errEl.hidden = false;
       return;
     }
     delete data.password_confirm;
+    if (data.username) data.username = data.username.trim().toLowerCase();
     try {
-      const r = await fetch('/bind', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const r = await fetch("/bind", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       const body = await r.json().catch(() => ({}));
       if (r.ok) {
-        // Render the success view inline by navigating to a query-string marker.
-        document.body.innerHTML = '<div class="container"><div class="card" style="max-width:420px;margin:48px auto;text-align:center;"><h1>绑定成功 ✓</h1><p class="subtitle">现在你可以用刚设置的密码登录。</p><a class="btn" href="/login">去登录</a></div></div>';
+        document.body.innerHTML = '<div class="container"><div class="card" style="max-width:420px;margin:48px auto;text-align:center;"><h1>绑定成功 ✓</h1><p class="subtitle">现在用刚设的用户名 + 密码登录。</p><a class="btn" href="/login">去登录</a></div></div>';
       } else {
-        errEl.textContent = (body.error && body.error.message) || `绑定失败 (${r.status})`;
+        errEl.textContent = (body.error && body.error.message) || ("绑定失败 (" + r.status + ")");
         errEl.hidden = false;
       }
     } catch {
-      errEl.textContent = '网络错误，请重试';
+      errEl.textContent = "网络错误，请重试";
       errEl.hidden = false;
     }
   });

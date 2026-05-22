@@ -16,6 +16,8 @@ from app.errors import register_exception_handlers
 from app.logging import setup_logging
 from app.modules.auth.router import router as auth_router
 from app.modules.cycle.router import router as cycle_router
+from app.modules.cycle.html_router import router as cycle_html_router
+from app.modules.admin_router import router as admin_router
 from app.modules.daily_log.router import router as daily_log_router
 from app.modules.diary.router import router as diary_router
 from app.modules.media.router import router as media_router
@@ -89,6 +91,8 @@ async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPE
 
 app.include_router(auth_router)
 app.include_router(cycle_router)
+app.include_router(cycle_html_router)
+app.include_router(admin_router)
 app.include_router(daily_log_router)
 app.include_router(diary_router)
 app.include_router(media_router)

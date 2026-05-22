@@ -2,31 +2,57 @@
 {% block title %}我们 · Couple Diary{% endblock %}
 {% block content %}
 <div class="card" style="text-align:center;">
-  <h1>我们</h1>
+  <h1>我们 💗</h1>
   {% if days_together is not none %}
-    <p style="font-size:48px; font-weight:700; color:var(--color-accent-strong); margin: var(--space-4) 0;">
+    <p style="font-size:48px; font-weight:700; color:var(--color-accent-strong); margin: var(--space-4) 0 0;">
       {{ days_together }}
     </p>
     <p class="subtitle">天</p>
+  {% else %}
+    <p class="subtitle" style="margin-top:var(--space-4);">还没设置纪念日</p>
   {% endif %}
+
   <div style="display:flex; justify-content:space-around; margin-top: var(--space-6);">
     <div>
       <p style="font-weight:700; font-size:18px;">{{ you.display_name }}</p>
-      <p class="subtitle">你</p>
+      <p class="subtitle">@{{ you.username }} · {% if you.role == "he" %}他{% else %}她{% endif %}</p>
     </div>
     {% if partner %}
       <div>
         <p style="font-weight:700; font-size:18px;">{{ partner.display_name }}</p>
-        <p class="subtitle">TA</p>
+        <p class="subtitle">@{{ partner.username }} · {% if partner.role == "he" %}他{% else %}她{% endif %}</p>
       </div>
     {% endif %}
   </div>
 </div>
 
 <div class="card">
+  <h3>📅 纪念日</h3>
+  <form action="/me/anniversary" method="post">
+    {% include "components/csrf.html" %}
+    <div class="form-row">
+      <label class="form-label" for="anniversary">在一起的那一天</label>
+      <input class="input" id="anniversary" name="anniversary" type="date"
+             value="{{ couple.anniversary.isoformat() if couple and couple.anniversary else "" }}">
+    </div>
+    <button type="submit" class="btn" style="width:100%">保存</button>
+  </form>
+</div>
+
+{% if partner %}
+<div class="card">
+  <h3>💗 伴侣</h3>
+  <p>显示名：<strong>{{ partner.display_name }}</strong></p>
+  <p>用户名：<code>{{ partner.username }}</code></p>
+  <p>身份：{% if partner.role == "he" %}他 / he{% else %}她 / she{% endif %}</p>
+</div>
+{% endif %}
+
+<div class="card">
   <h3>账号</h3>
-  <p class="subtitle">用户名：{{ you.username }}</p>
-  <p class="subtitle">角色：{{ you.role }}</p>
+  <p>显示名：<strong>{{ you.display_name }}</strong></p>
+  <p>用户名：<code>{{ you.username }}</code></p>
+  <p>身份：{% if you.role == "he" %}他 / he{% else %}她 / she{% endif %}</p>
   <form action="/logout" method="post" style="margin-top: var(--space-4);">
     <button type="submit" class="btn-secondary" style="width:100%">退出登录</button>
   </form>

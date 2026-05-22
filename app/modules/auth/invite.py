@@ -1,6 +1,7 @@
 """Invite token issuance and redemption for the closed 2-person bind flow."""
 from __future__ import annotations
 
+import re
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -72,6 +73,8 @@ def create_couple_and_invites(
 
 def redeem_invite(
     db: Session, *, token: str, plain_password: str,
+    username: str | None = None, display_name: str | None = None,
+    role: str | None = None,
 ) -> User:
     """Set the user's password from an unused, unexpired invite token.
 
@@ -90,6 +93,25 @@ def redeem_invite(
         raise InviteExpired("invite token has expired")
 
     user = db.query(User).filter_by(id=row.user_id).one()
+
+    if username:
+        username = username.strip().lower()
+        if not re.fullmatch(r"[a-z0-9_]{3,32}", username):
+            raise ValueError("username must be 3-32 chars: a-z, 0-9, _")
+        clash = db.query(User).filter(
+            User.username == username, User.id != user.id
+        ).one_or_none()
+        if clash:
+            raise ValueError("username already taken")
+        user.username = username
+    if display_name:
+        display_name = display_name.strip()
+        if not (1 <= len(display_name) <= 64):
+            raise ValueError("display_name must be 1-64 chars")
+        user.display_name = display_name
+    if role and role in ("he", "she"):
+        user.role = role
+
     user.password_hash = hash_password(plain_password)
     row.used_at = _now().replace(tzinfo=None)  # DB column is naive
 

@@ -6,11 +6,20 @@
   <p class="subtitle">{{ greeting }}, {{ user.display_name }}</p>
 </div>
 
-{% include 'fragments/cycle_ring.html' with context %}
+<div class="card">
+  <h3>快捷记录</h3>
+  <div style="display:flex; gap: var(--space-2); flex-wrap: wrap;">
+    <a class="btn" href="/log/{{ date.isoformat() }}">➕ 今日标签</a>
+    <a class="btn" href="/cycle/log">🩸 经期</a>
+    <a class="btn" href="/bbt/log">🌡 体温</a>
+  </div>
+</div>
 
-{% include 'fragments/predictor_card.html' with context %}
+{% include "fragments/cycle_ring.html" with context %}
 
-{% include 'fragments/partner_card.html' with context %}
+{% include "fragments/predictor_card.html" with context %}
+
+{% include "fragments/partner_card.html" with context %}
 
 <div class="card">
   <h3>今天的标签</h3>
@@ -38,7 +47,7 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p class="subtitle">还没有记录基础体温</p>
+    <p class="subtitle">还没有记录基础体温 — <a href="/bbt/log">去录入</a></p>
   {% endif %}
 </div>
 {% endblock %}

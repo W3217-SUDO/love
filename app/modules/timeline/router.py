@@ -235,10 +235,49 @@ def me_page(
 ):
     partner = find_partner(db, user.id)
     days = days_together(db, user.id)
+    from sqlalchemy import select
+    from app.modules.auth.models import Couple
+    couple = db.execute(
+        select(Couple).where(
+            (Couple.user_a_id == user.id) | (Couple.user_b_id == user.id),
+        ),
+    ).scalar_one_or_none()
     return templates.TemplateResponse(
         request=request, name="pages/me.html",
         context={
             "active": "me",
-            "you": user, "partner": partner, "days_together": days,
+            "you": user, "partner": partner,
+            "days_together": days, "couple": couple,
         },
     )
+
+
+@router.post("/me/anniversary")
+async def post_anniversary(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    from datetime import date as _date
+    from sqlalchemy import select as _select
+    from app.modules.auth.models import Couple as _Couple
+    from fastapi.responses import RedirectResponse as _Redirect
+    form = await request.form()
+    raw = (form.get("anniversary") or "").strip()
+    couple = db.execute(
+        _select(_Couple).where(
+            (_Couple.user_a_id == user.id) | (_Couple.user_b_id == user.id),
+        ),
+    ).scalar_one_or_none()
+    if couple is None:
+        return _Redirect(url="/me", status_code=303)
+    if not raw:
+        couple.anniversary = None
+    else:
+        try:
+            couple.anniversary = _date.fromisoformat(raw)
+        except ValueError:
+            pass
+    db.commit()
+    return _Redirect(url="/me", status_code=303)
+

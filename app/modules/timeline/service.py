@@ -64,10 +64,11 @@ def days_together(db: Session, user_id: int) -> int | None:
     ).scalar_one_or_none()
     if couple is None:
         return None
-    bonded = couple.bonded_at or couple.created_at
+    bonded = couple.anniversary or couple.bonded_at or couple.created_at
     if bonded is None:
         return None
-    return (date.today() - bonded.date()).days
+    d = bonded.date() if hasattr(bonded, "date") and not isinstance(bonded, date) else bonded
+    return (date.today() - d).days
 
 
 @dataclass

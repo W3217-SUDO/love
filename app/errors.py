@@ -68,6 +68,9 @@ def register_exception_handlers(app: FastAPI) -> None:
         log.warning("app_error", extra={
             "code": exc.code, "path": request.url.path, "error_msg": exc.message,
         })
+        if wants_html(request) and exc.http_status == 401:
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse(url="/login", status_code=303)
         if wants_html(request):
             # Map common statuses to dedicated templates.
             template_name = {

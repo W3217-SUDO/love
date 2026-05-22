@@ -109,14 +109,24 @@ async def post_bind(
 ):
     # Accept either JSON body or form-encoded body.
     content_type = request.headers.get("content-type", "")
+    extra = {}
     if content_type.startswith("application/json"):
         body = await request.json()
         token = body.get("token", "") if isinstance(body, dict) else ""
         password = body.get("password", "") if isinstance(body, dict) else ""
+        if isinstance(body, dict):
+            for k in ("username", "display_name", "role"):
+                v = body.get(k)
+                if v:
+                    extra[k] = v
     else:
         form = await request.form()
         token = form.get("token", "")
         password = form.get("password", "")
+        for k in ("username", "display_name", "role"):
+            v = form.get(k)
+            if v:
+                extra[k] = v
 
     if not token or not password or len(password) < 8:
         if wants_html(request):
@@ -128,7 +138,7 @@ async def post_bind(
         raise ValidationFailed("invalid token or password too short")
 
     try:
-        user = redeem_invite(db, token=token, plain_password=password)
+        user = redeem_invite(db, token=token, plain_password=password, **extra)
         db.commit()
     except InviteNotFound as exc:
         if wants_html(request):

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}基础体温 · Couple Diary{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>🌡 基础体温（BBT）</h1>
+  <p class="subtitle">每天起床第一件事测，三步法识别排卵需要至少 9 天连续数据。</p>
+</div>
+
+<div class="card">
+  <h3>录入</h3>
+  <form id="bbt-form" onsubmit="return false;">
+    {% include "components/csrf.html" %}
+    <div class="form-row">
+      <label class="form-label" for="date">日期</label>
+      <input class="input" id="date" name="date" type="date" value="{{ today }}" required>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="temp_c">体温（℃）</label>
+      <input class="input" id="temp_c" name="temp_c" type="number" step="0.01" min="34.5" max="39.5" placeholder="例：36.65" required>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="method">测量方法</label>
+      <select class="input" id="method" name="method">
+        <option value="oral">口腔</option>
+        <option value="vaginal">阴道</option>
+        <option value="axillary">腋下</option>
+        <option value="wrist">腕表</option>
+        <option value="other">其他</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="bbt_notes">备注（可选）</label>
+      <input class="input" id="bbt_notes" name="notes" maxlength="200" placeholder="例：昨晚熬夜了">
+    </div>
+    <div class="form-error" id="bbt-error" hidden></div>
+    <button class="btn" type="submit" style="width:100%">保存 🌡</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>最近记录</h3>
+  {% if readings %}
+    <ul style="list-style:none; padding:0; margin:0;">
+      {% for r in readings %}
+        <li style="display:flex; justify-content:space-between; padding: var(--space-2) 0; border-bottom:1px solid var(--color-border);">
+          <span class="subtitle">{{ r.date.isoformat() }} · {{ r.method or "—" }}</span>
+          <strong>{{ r.temp_c }} ℃</strong>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="subtitle">还没有体温记录</p>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const csrf = document.querySelector("input[name=csrf_token]")?.value || "";
+document.getElementById("bbt-form").addEventListener("submit", async (e) => {
+  const f = e.target;
+  const errEl = document.getElementById("bbt-error");
+  errEl.hidden = true;
+  try {
+    const r = await fetch("/bbt/log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+      body: JSON.stringify({
+        date: f.date.value,
+        temp_c: parseFloat(f.temp_c.value),
+        method: f.method.value || null,
+        notes: f.notes.value || null,
+      }),
+    });
+    if (r.ok) { location.reload(); return; }
+    const body = await r.json().catch(() => ({}));
+    errEl.textContent = (body.error && body.error.message) || ("失败 (" + r.status + ")");
+    errEl.hidden = false;
+  } catch (err) {
+    errEl.textContent = "网络错误，请重试";
+    errEl.hidden = false;
+  }
+});
+</script>
+{% endblock %}

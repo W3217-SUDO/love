@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}经期记录 · Couple Diary{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>🩸 经期记录</h1>
+  <p class="subtitle">记录开始 / 结束日期，预测器会自动算下次周期。</p>
+</div>
+
+<div class="card">
+  <h3>开始一次经期</h3>
+  <form id="start-form" onsubmit="return false;">
+    {% include "components/csrf.html" %}
+    <div class="form-row">
+      <label class="form-label" for="start_date">开始日期</label>
+      <input class="input" id="start_date" name="start_date" type="date" value="{{ today }}" required>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="start_notes">备注（可选）</label>
+      <input class="input" id="start_notes" name="notes" maxlength="200" placeholder="例如：流量大 / 痛经">
+    </div>
+    <div class="form-error" id="start-error" hidden></div>
+    <button class="btn" type="submit" style="width:100%">记录开始 🩸</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>结束一次经期</h3>
+  <form id="end-form" onsubmit="return false;">
+    {% include "components/csrf.html" %}
+    <div class="form-row">
+      <label class="form-label" for="end_start_date">本次开始日期</label>
+      <select class="input" id="end_start_date" name="start_date" required>
+        <option value="">--选择--</option>
+        {% for p in periods %}
+          {% if not p.end_date %}<option value="{{ p.start_date.isoformat() }}">{{ p.start_date.isoformat() }}（未结束）</option>{% endif %}
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="end_date">结束日期</label>
+      <input class="input" id="end_date" name="end_date" type="date" value="{{ today }}" required>
+    </div>
+    <div class="form-error" id="end-error" hidden></div>
+    <button class="btn" type="submit" style="width:100%">记录结束 ✓</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>历史经期</h3>
+  {% if periods %}
+    <ul style="list-style:none; padding:0; margin:0;">
+      {% for p in periods %}
+        <li style="display:flex; justify-content:space-between; padding: var(--space-2) 0; border-bottom:1px solid var(--color-border);">
+          <span>{{ p.start_date.isoformat() }} → {{ p.end_date.isoformat() if p.end_date else "（未结束）" }}</span>
+          {% if p.notes %}<span class="subtitle">{{ p.notes }}</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="subtitle">还没有经期记录</p>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function postJSON(url, data, errEl, csrf) {
+  errEl.hidden = true;
+  try {
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf || "" },
+      body: JSON.stringify(data),
+    });
+    if (r.ok) { location.reload(); return; }
+    const body = await r.json().catch(() => ({}));
+    errEl.textContent = (body.error && body.error.message) || ("失败 (" + r.status + ")");
+    errEl.hidden = false;
+  } catch (e) {
+    errEl.textContent = "网络错误，请重试";
+    errEl.hidden = false;
+  }
+}
+const csrf = document.querySelector("input[name=csrf_token]")?.value || "";
+document.getElementById("start-form").addEventListener("submit", (e) => {
+  const f = e.target;
+  postJSON("/cycle/log/start", {
+    start_date: f.start_date.value,
+    notes: f.notes.value || null,
+  }, document.getElementById("start-error"), csrf);
+});
+document.getElementById("end-form").addEventListener("submit", (e) => {
+  const f = e.target;
+  if (!f.start_date.value) {
+    const err = document.getElementById("end-error");
+    err.textContent = "请选择本次经期的开始日期";
+    err.hidden = false;
+    return;
+  }
+  postJSON("/cycle/log/end", {
+    start_date: f.start_date.value,
+    end_date: f.end_date.value,
+  }, document.getElementById("end-error"), csrf);
+});
+</script>
+{% endblock %}

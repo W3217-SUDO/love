@@ -1,22 +1,26 @@
 {# Bottom nav (mobile) / sidebar (desktop). Active item determined by 'active' var passed in. #}
 <nav class="bottom-nav" data-nav>
-  <a href="/" {% if active == 'today' %}aria-current="page"{% endif %}>
+  <a href="/" {% if active == "today" %}aria-current="page"{% endif %}>
     <span aria-hidden="true">🏠</span>
     <span>今天</span>
   </a>
-  <a href="/calendar" {% if active == 'calendar' %}aria-current="page"{% endif %}>
+  <a href="/calendar" {% if active == "calendar" %}aria-current="page"{% endif %}>
     <span aria-hidden="true">📅</span>
     <span>日历</span>
   </a>
-  <a href="/diary" {% if active == 'diary' %}aria-current="page"{% endif %}>
-    <span aria-hidden="true">📓</span>
-    <span>日记</span>
+  <a href="/log/today" {% if active == "log" %}aria-current="page"{% endif %} class="nav-plus">
+    <span aria-hidden="true">➕</span>
+    <span>记录</span>
   </a>
-  <a href="/trip" {% if active == 'trip' %}aria-current="page"{% endif %}>
-    <span aria-hidden="true">✈️</span>
-    <span>旅行</span>
+  <a href="/cycle/log" {% if active == "cycle" %}aria-current="page"{% endif %}>
+    <span aria-hidden="true">🩸</span>
+    <span>经期</span>
   </a>
-  <a href="/me" {% if active == 'me' %}aria-current="page"{% endif %}>
+  <a href="/bbt/log" {% if active == "bbt" %}aria-current="page"{% endif %}>
+    <span aria-hidden="true">🌡</span>
+    <span>体温</span>
+  </a>
+  <a href="/me" {% if active == "me" %}aria-current="page"{% endif %}>
     <span aria-hidden="true">👥</span>
     <span>我们</span>
   </a>
