@@ -3,7 +3,6 @@ from datetime import date
 import pytest
 
 from app.modules.auth.models import User
-from app.modules.cycle.models import Period
 from app.modules.cycle.service import (
     PeriodNotFound,
     PeriodOverlapError,

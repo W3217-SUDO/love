@@ -1,16 +1,19 @@
 """Admin tools — account switching for the male partner (role=he) to view the female side."""
-from fastapi import APIRouter, Depends, Request, Response
+import logging
+
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db import get_db
 from app.deps import get_current_user
-from app.errors import Forbidden, NotFound
+from app.errors import NotFound
 from app.modules.auth.models import User
 from app.modules.auth.sessions import create_session, revoke_session
 
 router = APIRouter(tags=["admin"])
+log = logging.getLogger(__name__)
 
 
 @router.get("/admin/login-as/{user_id}")
@@ -43,7 +46,7 @@ def login_as(
         try:
             revoke_session(db, token=old)
         except Exception:
-            pass
+            log.exception("failed to revoke old session during account switch")
 
     new_token = create_session(
         db, user_id=target.id,

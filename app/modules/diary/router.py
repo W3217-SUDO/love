@@ -25,8 +25,11 @@ from app.modules.media.signing import sign_media_url
 from app.templating import templates
 from app.util.http import wants_html
 
-
 router = APIRouter(tags=["diary"])
+
+
+def _form_str(value: object, default: str | None = None) -> str | None:
+    return value if isinstance(value, str) else default
 
 
 def _author_name(db: Session, author_id: int) -> str:
@@ -144,9 +147,9 @@ async def diary_create(
     user: User = Depends(get_current_user),
 ):
     form = await request.form()
-    body = form.get("body", "")
-    title = form.get("title") or None
-    visibility = form.get("visibility", "shared")
+    body = _form_str(form.get("body"), "") or ""
+    title = _form_str(form.get("title")) or None
+    visibility = _form_str(form.get("visibility"), "shared") or "shared"
     try:
         e = create_entry(
             db, author_id=user.id, body=body,
@@ -167,9 +170,9 @@ async def diary_update(
     user: User = Depends(get_current_user),
 ):
     form = await request.form()
-    body = form.get("body") or None
-    title = form.get("title") or None
-    visibility = form.get("visibility") or None
+    body = _form_str(form.get("body")) or None
+    title = _form_str(form.get("title")) or None
+    visibility = _form_str(form.get("visibility")) or None
     try:
         e = update_entry(
             db, entry_id=entry_id, requester_id=user.id,

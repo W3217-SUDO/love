@@ -1,3 +1,23 @@
+from sqlalchemy import delete
+
+from app.modules.auth.invite import create_couple_and_invites, redeem_invite
+from app.modules.auth.models import AuthSession, Couple, InviteToken, User
+
+
+def _login(client, db):
+    password = "strongpassword"
+    db.execute(delete(AuthSession))
+    db.execute(delete(InviteToken))
+    db.execute(delete(Couple))
+    db.execute(delete(User))
+    db.flush()
+    he_tok, _ = create_couple_and_invites(db, he_name="Alice", she_name="Bob")
+    db.flush()
+    redeem_invite(db, token=he_tok, plain_password=password)
+    db.flush()
+    client.post("/login", json={"username": "alice", "password": password})
+
+
 def test_static_css_served(client):
     r = client.get("/static/css/theme.css")
     assert r.status_code == 200
@@ -12,7 +32,8 @@ def test_static_css_served(client):
 def test_manifest_served(client):
     r = client.get("/static/manifest.webmanifest")
     assert r.status_code == 200
-    assert "application/manifest+json" in r.headers["content-type"] or "json" in r.headers["content-type"]
+    content_type = r.headers["content-type"]
+    assert "application/manifest+json" in content_type or "json" in content_type
     import json
     data = json.loads(r.text)
     assert data["name"]
@@ -22,8 +43,9 @@ def test_manifest_served(client):
     assert data["theme_color"]
 
 
-def test_root_renders_base_with_pwa_meta(client):
-    r = client.get("/")
+def test_root_renders_base_with_pwa_meta(client, db):
+    _login(client, db)
+    r = client.get("/", headers={"Accept": "text/html"})
     assert r.status_code == 200
     body = r.text
     # PWA meta tags

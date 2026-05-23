@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import delete
@@ -59,7 +59,7 @@ def test_lookup_session_expired_raises(db):
     token = create_session(db, user_id=u.id, ip=None, user_agent=None)
     db.flush()
     row = db.query(AuthSession).filter_by(token=token).one()
-    row.expires_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1)
+    row.expires_at = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=1)
     db.flush()
     with pytest.raises(SessionExpired):
         lookup_session(db, token=token)

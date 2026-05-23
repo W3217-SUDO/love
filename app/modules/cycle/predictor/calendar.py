@@ -63,8 +63,11 @@ class CalendarSignal:
         cycle_std = pstdev(gaps) if len(gaps) >= 2 else 0.0
 
         # Period length (closed periods only)
-        closed = [p for p in periods_asc if p.end_date is not None]
-        durations = [(p.end_date - p.start_date).days + 1 for p in closed]
+        durations = [
+            (p.end_date - p.start_date).days + 1
+            for p in periods_asc
+            if p.end_date is not None
+        ]
         avg_period = round(mean(durations)) if durations else 5
 
         latest = periods_asc[-1]

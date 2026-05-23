@@ -67,6 +67,7 @@ def test_combined_evidence_includes_all_signals(db):
 
 def test_combined_lh_overrides_bbt_and_calendar(db):
     from decimal import Decimal
+
     from app.modules.cycle.service import log_bbt
     u = _user(db)
     _seed_cycles(db, u.id, [date(2026, 4, 1), date(2026, 4, 29)], length=5)

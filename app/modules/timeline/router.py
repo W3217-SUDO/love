@@ -2,7 +2,7 @@
 import calendar as cal_module
 from datetime import date, timedelta
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -18,7 +18,6 @@ from app.modules.timeline.service import (
     find_partner,
 )
 from app.templating import templates
-
 
 router = APIRouter(tags=["timeline"])
 
@@ -151,7 +150,12 @@ def _build_calendar(year: int, month: int, periods: list[Period], pred) -> list[
                 d += timedelta(days=1)
 
     predicted_period_dates: set[date] = set()
-    if pred and pred.next_period and pred.next_period.year == year and pred.next_period.month == month:
+    if (
+        pred
+        and pred.next_period
+        and pred.next_period.year == year
+        and pred.next_period.month == month
+    ):
         # mark ~5 day window for predicted period
         for i in range(5):
             d = pred.next_period + timedelta(days=i)
@@ -206,7 +210,13 @@ def calendar_for(
     return _render_calendar(request, db, user, year, month)
 
 
-def _render_calendar(request, db, user, year, month):
+def _render_calendar(
+    request: Request,
+    db: Session,
+    user: User,
+    year: int,
+    month: int,
+) -> Response:
     if not (1 <= month <= 12):
         raise NotFound("invalid month")
     periods = list_periods(db, user_id=user.id)
@@ -236,6 +246,7 @@ def me_page(
     partner = find_partner(db, user.id)
     days = days_together(db, user.id)
     from sqlalchemy import select
+
     from app.modules.auth.models import Couple
     couple = db.execute(
         select(Couple).where(
@@ -259,11 +270,14 @@ async def post_anniversary(
     user: User = Depends(get_current_user),
 ):
     from datetime import date as _date
-    from sqlalchemy import select as _select
-    from app.modules.auth.models import Couple as _Couple
+
     from fastapi.responses import RedirectResponse as _Redirect
+    from sqlalchemy import select as _select
+
+    from app.modules.auth.models import Couple as _Couple
     form = await request.form()
-    raw = (form.get("anniversary") or "").strip()
+    anniversary = form.get("anniversary")
+    raw = anniversary.strip() if isinstance(anniversary, str) else ""
     couple = db.execute(
         _select(_Couple).where(
             (_Couple.user_a_id == user.id) | (_Couple.user_b_id == user.id),
@@ -280,4 +294,3 @@ async def post_anniversary(
             pass
     db.commit()
     return _Redirect(url="/me", status_code=303)
-

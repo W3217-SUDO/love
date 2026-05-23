@@ -15,6 +15,7 @@ def test_cli_init_couple_prints_bind_urls(db):
     again after to leave the DB clean for subsequent tests.
     """
     from sqlalchemy import delete
+
     from app.modules.auth.models import Couple, InviteToken, User
     from tests.conftest import TestSessionLocal
 
@@ -29,9 +30,20 @@ def test_cli_init_couple_prints_bind_urls(db):
         env_overrides = {"APP_ENV": "test"}
         # Use the venv python explicitly
         result = subprocess.run(
-            [sys.executable, "-m", "app.cli", "init-couple",
-             "--he", "Aaron", "--she", "Beth"],
-            cwd=REPO, capture_output=True, text=True, env={**__import__("os").environ, **env_overrides},
+            [
+                sys.executable,
+                "-m",
+                "app.cli",
+                "init-couple",
+                "--he",
+                "Aaron",
+                "--she",
+                "Beth",
+            ],
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+            env={**__import__("os").environ, **env_overrides},
             timeout=30,
         )
         assert result.returncode == 0, f"stderr: {result.stderr}\nstdout: {result.stdout}"
@@ -50,6 +62,7 @@ def test_cli_init_couple_prints_bind_urls(db):
 def test_cli_init_couple_refuses_when_exists(db):
     """Run twice; the second call should exit non-zero."""
     from sqlalchemy import delete
+
     from app.modules.auth.models import Couple, InviteToken, User
     from tests.conftest import TestSessionLocal
 

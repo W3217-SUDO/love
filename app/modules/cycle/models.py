@@ -1,9 +1,20 @@
-from datetime import date as date_t, datetime, time as time_t
+from datetime import date as date_t
+from datetime import datetime
+from datetime import time as time_t
 from decimal import Decimal
 
 from sqlalchemy import (
-    CheckConstraint, Date, DateTime, ForeignKey, Integer, Numeric, String,
-    Text, Time, UniqueConstraint, func,
+    CheckConstraint,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    Time,
+    UniqueConstraint,
+    func,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 

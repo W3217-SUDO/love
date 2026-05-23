@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -65,7 +65,7 @@ def test_redeem_invite_expired_token_raises(db):
     he_token, _ = create_couple_and_invites(db, he_name="X", she_name="Y")
     db.flush()
     tok = db.query(InviteToken).filter_by(token=he_token).one()
-    tok.expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
+    tok.expires_at = datetime.now(UTC) - timedelta(hours=1)
     db.flush()
     with pytest.raises(InviteExpired):
         redeem_invite(db, token=he_token, plain_password="strongpassword")

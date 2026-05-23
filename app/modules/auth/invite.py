@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -31,7 +31,7 @@ class InviteExpired(InviteError):
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def create_couple_and_invites(
@@ -88,7 +88,7 @@ def redeem_invite(
     # Compare both as aware UTC (DB stores naive UTC; treat as UTC).
     expires_at = row.expires_at
     if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
+        expires_at = expires_at.replace(tzinfo=UTC)
     if expires_at < _now():
         raise InviteExpired("invite token has expired")
 

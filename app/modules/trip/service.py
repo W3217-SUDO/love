@@ -132,7 +132,7 @@ def attach_media(
     db: Session, *, trip_id: int, requester_id: int, media_id: int,
     sort_order: int | None = None, caption: str | None = None,
 ) -> TripMedia:
-    t = get_trip(db, trip_id=trip_id, requester_id=requester_id)
+    get_trip(db, trip_id=trip_id, requester_id=requester_id)
     media = db.execute(
         select(Media).where(Media.id == media_id),
     ).scalar_one_or_none()

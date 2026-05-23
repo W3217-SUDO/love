@@ -67,6 +67,7 @@ class BBTSignal:
             )
 
         ovulation = detected_t1 - timedelta(days=1)
+        assert t3_date is not None
         days_since = (target_date - ovulation).days
         if not (0 <= days_since <= POST_OVULATION_WINDOW):
             return SignalResult(

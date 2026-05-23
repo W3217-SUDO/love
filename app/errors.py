@@ -2,7 +2,7 @@ import logging
 from typing import Any
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 log = logging.getLogger(__name__)
 
@@ -59,12 +59,11 @@ class StorageError(AppError):
 
 
 def register_exception_handlers(app: FastAPI) -> None:
-    from fastapi.responses import HTMLResponse
     from app.templating import templates  # local import to avoid circular
     from app.util.http import wants_html
 
     @app.exception_handler(AppError)
-    async def app_error_handler(request: Request, exc: AppError) -> JSONResponse | HTMLResponse:
+    async def app_error_handler(request: Request, exc: AppError) -> Response:
         log.warning("app_error", extra={
             "code": exc.code, "path": request.url.path, "error_msg": exc.message,
         })

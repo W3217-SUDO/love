@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from app.modules.auth.models import AuthSession, User
 
@@ -12,7 +12,7 @@ def _user(db):
 
 def test_create_session(db):
     u = _user(db)
-    future = datetime.now(timezone.utc) + timedelta(days=30)
+    future = datetime.now(UTC) + timedelta(days=30)
     s = AuthSession(
         token="x" * 48, user_id=u.id, expires_at=future,
         ip="127.0.0.1", user_agent="pytest",
@@ -26,7 +26,7 @@ def test_create_session(db):
 
 def test_session_token_unique(db):
     u = _user(db)
-    future = datetime.now(timezone.utc) + timedelta(days=30)
+    future = datetime.now(UTC) + timedelta(days=30)
     db.add(AuthSession(token="dup-token", user_id=u.id, expires_at=future))
     db.flush()
     import pytest

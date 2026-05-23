@@ -1,6 +1,6 @@
 """TimelineService — assemble today aggregator data."""
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -67,7 +67,7 @@ def days_together(db: Session, user_id: int) -> int | None:
     bonded = couple.anniversary or couple.bonded_at or couple.created_at
     if bonded is None:
         return None
-    d = bonded.date() if hasattr(bonded, "date") and not isinstance(bonded, date) else bonded
+    d = bonded.date() if isinstance(bonded, datetime) else bonded
     return (date.today() - d).days
 
 

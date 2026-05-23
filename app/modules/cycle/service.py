@@ -8,7 +8,7 @@ Wraps raw SQLAlchemy with business invariants:
 Endpoints in router.py and predictors call these functions; nothing should hit
 the cycle models directly.
 """
-from datetime import date, time, timedelta
+from datetime import date, time
 from decimal import Decimal
 
 from sqlalchemy import select

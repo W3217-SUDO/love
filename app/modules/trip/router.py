@@ -28,8 +28,11 @@ from app.modules.trip.service import (
 from app.templating import templates
 from app.util.http import wants_html
 
-
 router = APIRouter(tags=["trip"])
+
+
+def _form_str(value: object, default: str | None = None) -> str | None:
+    return value if isinstance(value, str) else default
 
 
 def _creator_name(db: Session, user_id: int) -> str:
@@ -153,11 +156,11 @@ async def trip_create(
         t = create_trip(
             db,
             creator_id=user.id,
-            title=form.get("title", ""),
-            location=form.get("location") or None,
-            start_date=_parse_date(form.get("start_date")),
-            end_date=_parse_date(form.get("end_date")),
-            description=form.get("description") or None,
+            title=_form_str(form.get("title"), "") or "",
+            location=_form_str(form.get("location")) or None,
+            start_date=_parse_date(_form_str(form.get("start_date"))),
+            end_date=_parse_date(_form_str(form.get("end_date"))),
+            description=_form_str(form.get("description")) or None,
         )
         db.commit()
     except ValueError as exc:
@@ -175,14 +178,16 @@ async def trip_update(
 ):
     form = await request.form()
     try:
+        location = _form_str(form.get("location"))
+        description = _form_str(form.get("description"))
         t = update_trip(
             db,
             trip_id=trip_id, requester_id=user.id,
-            title=form.get("title") or None,
-            location=form.get("location") if form.get("location") is not None else None,
-            start_date=_parse_date(form.get("start_date")),
-            end_date=_parse_date(form.get("end_date")),
-            description=form.get("description") if form.get("description") is not None else None,
+            title=_form_str(form.get("title")) or None,
+            location=location if location is not None else None,
+            start_date=_parse_date(_form_str(form.get("start_date"))),
+            end_date=_parse_date(_form_str(form.get("end_date"))),
+            description=description if description is not None else None,
         )
         db.commit()
     except TripNotFound as exc:

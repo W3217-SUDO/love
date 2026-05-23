@@ -17,7 +17,7 @@ from app.config import get_settings
 from app.modules.auth.invite import create_couple_and_invites
 
 
-def _make_session() -> sessionmaker:  # type: ignore[type-arg]
+def _make_session() -> sessionmaker:
     settings = get_settings()
     # Use the TEST DB if APP_ENV=test, else the production DB.
     url = (

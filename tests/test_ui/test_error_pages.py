@@ -1,5 +1,3 @@
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
 
 def test_404_returns_html_for_html_accept(client):

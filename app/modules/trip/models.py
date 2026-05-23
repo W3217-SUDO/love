@@ -1,7 +1,15 @@
-from datetime import date as date_t, datetime
+from datetime import date as date_t
+from datetime import datetime
 
 from sqlalchemy import (
-    Date, DateTime, ForeignKey, Integer, PrimaryKeyConstraint, String, Text, func,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    PrimaryKeyConstraint,
+    String,
+    Text,
+    func,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 

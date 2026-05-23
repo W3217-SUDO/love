@@ -1,5 +1,6 @@
 from sqlalchemy import text
-from app.db import engine, SessionLocal
+
+from app.db import SessionLocal, engine
 
 
 def test_engine_connects_and_returns_one():

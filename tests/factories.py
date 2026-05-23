@@ -1,5 +1,4 @@
 """factory_boy factories. Each module's tests append factories here as needed."""
-import factory
 from factory.alchemy import SQLAlchemyModelFactory
 
 from tests.conftest import TestSessionLocal

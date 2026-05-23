@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy.exc import IntegrityError
@@ -15,7 +15,7 @@ def _make_user(db, name="alice", role="she"):
 
 def test_create_invite_token(db):
     u = _make_user(db)
-    future = datetime.now(timezone.utc) + timedelta(days=7)
+    future = datetime.now(UTC) + timedelta(days=7)
     token = InviteToken(token="abc" * 12, user_id=u.id, expires_at=future)
     db.add(token)
     db.flush()
@@ -26,7 +26,7 @@ def test_create_invite_token(db):
 
 def test_token_value_unique(db):
     u = _make_user(db, name="bob", role="he")
-    future = datetime.now(timezone.utc) + timedelta(days=7)
+    future = datetime.now(UTC) + timedelta(days=7)
     db.add(InviteToken(token="dup-token-aaaa", user_id=u.id, expires_at=future))
     db.flush()
     db.add(InviteToken(token="dup-token-aaaa", user_id=u.id, expires_at=future))

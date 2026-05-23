@@ -1,5 +1,5 @@
 """Auth routes: bind, login, logout. JSON API + HTML pages for Phase B."""
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Cookie, Depends, Query, Request, Response, status
 from fastapi.responses import HTMLResponse
@@ -74,8 +74,8 @@ def get_bind_info(
         raise InviteAlreadyUsedError("invite token has already been used")
     expires_at = row.expires_at
     if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if expires_at < datetime.now(timezone.utc):
+        expires_at = expires_at.replace(tzinfo=UTC)
+    if expires_at < datetime.now(UTC):
         if wants_html(request):
             return templates.TemplateResponse(
                 request=request, name="pages/login.html",

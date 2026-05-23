@@ -1,5 +1,6 @@
 """Daily log HTTP endpoints."""
-from datetime import date as date_t, datetime
+from datetime import date as date_t
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import RedirectResponse

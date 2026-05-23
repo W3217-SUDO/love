@@ -1,8 +1,8 @@
 from app.modules.daily_log.catalog import (
     CATEGORIES,
+    TAG_BY_KEY,
     TAGS,
     TAGS_BY_CATEGORY,
-    TAG_BY_KEY,
     category_of,
     is_valid_category,
     is_valid_tag,
@@ -16,7 +16,7 @@ def test_all_categories_have_unique_keys():
 
 def test_all_tags_have_unique_keys():
     keys = [t.key for t in TAGS]
-    assert len(keys) == len(set(keys)), f"duplicate tag keys"
+    assert len(keys) == len(set(keys)), "duplicate tag keys"
 
 
 def test_every_tag_belongs_to_known_category():

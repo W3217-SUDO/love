@@ -4,7 +4,6 @@ from decimal import Decimal
 import pytest
 
 from app.modules.auth.models import User
-from app.modules.cycle.models import BbtReading
 from app.modules.cycle.service import (
     InvalidBbtReading,
     list_bbt,

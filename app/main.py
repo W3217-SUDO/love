@@ -1,5 +1,5 @@
-from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -14,10 +14,10 @@ from app.config import get_settings
 from app.db import SessionLocal
 from app.errors import register_exception_handlers
 from app.logging import setup_logging
-from app.modules.auth.router import router as auth_router
-from app.modules.cycle.router import router as cycle_router
-from app.modules.cycle.html_router import router as cycle_html_router
 from app.modules.admin_router import router as admin_router
+from app.modules.auth.router import router as auth_router
+from app.modules.cycle.html_router import router as cycle_html_router
+from app.modules.cycle.router import router as cycle_router
 from app.modules.daily_log.router import router as daily_log_router
 from app.modules.diary.router import router as diary_router
 from app.modules.media.router import router as media_router

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -26,7 +26,7 @@ class SessionExpired(SessionError):
 
 def _now_naive_utc() -> datetime:
     # DB stores naive UTC; keep all internal math aware then strip tzinfo on write.
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 def create_session(

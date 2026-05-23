@@ -2,7 +2,8 @@ from datetime import date, datetime
 
 from sqlalchemy import (
     CheckConstraint,
-    Date, DateTime,
+    Date,
+    DateTime,
     ForeignKey,
     String,
     UniqueConstraint,

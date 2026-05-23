@@ -1,9 +1,7 @@
-from fastapi import Depends, FastAPI
-from fastapi.testclient import TestClient
+from fastapi import Depends
 from sqlalchemy import delete
 
 from app.deps import get_current_user
-from app.errors import register_exception_handlers
 from app.modules.auth.invite import create_couple_and_invites, redeem_invite
 from app.modules.auth.models import AuthSession, Couple, InviteToken, User
 

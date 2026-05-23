@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 
 from app.modules.auth.models import User
-from app.modules.daily_log.models import DailyEntry, DailyTag
+from app.modules.daily_log.models import DailyTag
 from app.modules.daily_log.service import (
     UnknownTagError,
     get_or_create_entry,

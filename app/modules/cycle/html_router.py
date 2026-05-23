@@ -1,5 +1,6 @@
 """HTML pages for cycle log and BBT log — overlay the JSON API endpoints."""
 from datetime import date
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
@@ -7,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.deps import get_current_user
 from app.modules.auth.models import User
-from app.modules.cycle.service import list_periods, list_bbt
+from app.modules.cycle.service import list_bbt, list_periods
 from app.templating import templates
 
 router = APIRouter(tags=["cycle-html"])
