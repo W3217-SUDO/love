@@ -26,9 +26,18 @@ sudo -u "$APP_USER" bash -c "cd $APP_DIR && set -a && . $APP_DIR/.env.production
 
 echo "== Restart service =="
 systemctl restart couple-diary
-sleep 3
 
-if ! curl -fsS http://127.0.0.1:8000/healthz | grep -q '"status":"ok"'; then
+echo "== Wait for healthz =="
+healthy=0
+for _ in $(seq 1 30); do
+    if curl -fsS http://127.0.0.1:8000/healthz | grep -q '"status":"ok"'; then
+        healthy=1
+        break
+    fi
+    sleep 1
+done
+
+if [ "$healthy" -ne 1 ]; then
     echo "ROLLBACK: /healthz failed"
     gunzip < "$DATA_DIR/backups/pre-deploy/${ts}.sql.gz" | mysql -uroot couple_diary
     sudo -u "$APP_USER" git reset --hard HEAD~1
