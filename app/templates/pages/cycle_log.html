@@ -25,24 +25,28 @@
 
 <div class="card">
   <h3>结束一次经期</h3>
-  <form id="end-form" onsubmit="return false;">
-    {% include "components/csrf.html" %}
-    <div class="form-row">
-      <label class="form-label" for="end_start_date">本次开始日期</label>
-      <select class="input" id="end_start_date" name="start_date" required>
-        <option value="">--选择--</option>
-        {% for p in periods %}
-          {% if not p.end_date %}<option value="{{ p.start_date.isoformat() }}">{{ p.start_date.isoformat() }}（未结束）</option>{% endif %}
-        {% endfor %}
-      </select>
-    </div>
-    <div class="form-row">
-      <label class="form-label" for="end_date">结束日期</label>
-      <input class="input" id="end_date" name="end_date" type="date" value="{{ today }}" required>
-    </div>
-    <div class="form-error" id="end-error" hidden></div>
-    <button class="btn" type="submit" style="width:100%">记录结束 ✓</button>
-  </form>
+  {% set unfinished = periods | selectattr("end_date", "none") | list %}
+  {% if unfinished %}
+    <form id="end-form" onsubmit="return false;">
+      {% include "components/csrf.html" %}
+      <div class="form-row">
+        <label class="form-label" for="end_start_date">本次开始日期</label>
+        <select class="input" id="end_start_date" name="start_date" required>
+          {% for p in unfinished %}
+            <option value="{{ p.start_date.isoformat() }}">{{ p.start_date.isoformat() }}（未结束）</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="end_date">结束日期</label>
+        <input class="input" id="end_date" name="end_date" type="date" value="{{ today }}" required>
+      </div>
+      <div class="form-error" id="end-error" hidden></div>
+      <button class="btn" type="submit" style="width:100%">记录结束 ✓</button>
+    </form>
+  {% else %}
+    <p class="subtitle">目前没有未结束的经期。要结束一次经期，先在上面"开始一次经期"建一条。</p>
+  {% endif %}
 </div>
 
 <div class="card">
@@ -50,9 +54,16 @@
   {% if periods %}
     <ul style="list-style:none; padding:0; margin:0;">
       {% for p in periods %}
-        <li style="display:flex; justify-content:space-between; padding: var(--space-2) 0; border-bottom:1px solid var(--color-border);">
-          <span>{{ p.start_date.isoformat() }} → {{ p.end_date.isoformat() if p.end_date else "（未结束）" }}</span>
-          {% if p.notes %}<span class="subtitle">{{ p.notes }}</span>{% endif %}
+        <li style="display:flex; justify-content:space-between; align-items:center; padding: var(--space-2) 0; border-bottom:1px solid var(--color-border);">
+          <span>
+            {{ p.start_date.isoformat() }} → {{ p.end_date.isoformat() if p.end_date else "（未结束）" }}
+            {% if p.notes %}<br><span class="subtitle">{{ p.notes }}</span>{% endif %}
+          </span>
+          <form action="/cycle/log/{{ p.id }}/delete" method="post" style="display:inline; margin:0;"
+                onsubmit="return confirm('确认删除这条经期记录？');">
+            {% include "components/csrf.html" %}
+            <button type="submit" class="btn-secondary" style="padding:4px 12px; font-size:12px;">删除</button>
+          </form>
         </li>
       {% endfor %}
     </ul>
@@ -63,6 +74,15 @@
 {% endblock %}
 {% block scripts %}
 <script>
+function friendlyErr(code, message, status) {
+  const map = {
+    period_overlap: "这段时间已经有一条经期记录了，请检查上面的历史，或先删除冲突的那条。",
+    validation_failed: "填写的数据有问题，检查日期格式是否正确。",
+    not_found: "找不到对应的经期记录。",
+    invalid_credentials: "用户名或密码错误。",
+  };
+  return map[code] || message || ("失败 (" + status + ")");
+}
 async function postJSON(url, data, errEl, csrf) {
   errEl.hidden = true;
   try {
@@ -73,7 +93,8 @@ async function postJSON(url, data, errEl, csrf) {
     });
     if (r.ok) { location.reload(); return; }
     const body = await r.json().catch(() => ({}));
-    errEl.textContent = (body.error && body.error.message) || ("失败 (" + r.status + ")");
+    const err = body.error || {};
+    errEl.textContent = friendlyErr(err.code, err.message, r.status);
     errEl.hidden = false;
   } catch (e) {
     errEl.textContent = "网络错误，请重试";
@@ -81,14 +102,14 @@ async function postJSON(url, data, errEl, csrf) {
   }
 }
 const csrf = document.querySelector("input[name=csrf_token]")?.value || "";
-document.getElementById("start-form").addEventListener("submit", (e) => {
+document.getElementById("start-form")?.addEventListener("submit", (e) => {
   const f = e.target;
   postJSON("/cycle/log/start", {
     start_date: f.start_date.value,
     notes: f.notes.value || null,
   }, document.getElementById("start-error"), csrf);
 });
-document.getElementById("end-form").addEventListener("submit", (e) => {
+document.getElementById("end-form")?.addEventListener("submit", (e) => {
   const f = e.target;
   if (!f.start_date.value) {
     const err = document.getElementById("end-error");

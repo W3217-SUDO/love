@@ -50,17 +50,23 @@ class CalendarSignal:
     def evaluate(self, db: Session, *, user_id: int, target_date: date) -> SignalResult:
         # list_periods returns DESC; reverse to ASC for stats
         periods = list_periods(db, user_id=user_id, limit=HISTORY_WINDOW)
-        if len(periods) < 2:
+        if len(periods) < 1:
             return SignalResult(
                 source=self.source, active=False, confidence=0.0,
-                evidence=f"need >=2 periods, have {len(periods)}",
+                evidence="no period history yet — add at least one period to start predicting",
             )
         # ASC order for diff
         periods_asc = list(reversed(periods))
         starts = [p.start_date for p in periods_asc]
-        gaps = [(starts[i + 1] - starts[i]).days for i in range(len(starts) - 1)]
-        avg_cycle = round(mean(gaps))
-        cycle_std = pstdev(gaps) if len(gaps) >= 2 else 0.0
+        if len(starts) >= 2:
+            gaps = [(starts[i + 1] - starts[i]).days for i in range(len(starts) - 1)]
+            avg_cycle = round(mean(gaps))
+            cycle_std = pstdev(gaps) if len(gaps) >= 2 else 0.0
+        else:
+            # Single-period fallback: assume default 28-day cycle.
+            gaps = []
+            avg_cycle = 28
+            cycle_std = 0.0
 
         # Period length (closed periods only)
         durations = [
@@ -92,8 +98,10 @@ class CalendarSignal:
             confidence = 0.65
         elif len(periods) >= 4:
             confidence = 0.50
-        else:
+        elif len(periods) >= 2:
             confidence = 0.30
+        else:
+            confidence = 0.20  # 1 period + default 28-day cycle: rough baseline
 
         return SignalResult(
             source=self.source,

@@ -42,9 +42,16 @@
   {% if readings %}
     <ul style="list-style:none; padding:0; margin:0;">
       {% for r in readings %}
-        <li style="display:flex; justify-content:space-between; padding: var(--space-2) 0; border-bottom:1px solid var(--color-border);">
-          <span class="subtitle">{{ r.date.isoformat() }} · {{ r.method or "—" }}</span>
-          <strong>{{ r.temp_c }} ℃</strong>
+        <li style="display:flex; justify-content:space-between; align-items:center; padding: var(--space-2) 0; border-bottom:1px solid var(--color-border);">
+          <span>
+            <span class="subtitle">{{ r.date.isoformat() }} · {{ r.method or "—" }}</span>
+            <strong style="margin-left: var(--space-2)">{{ r.temp_c }} ℃</strong>
+          </span>
+          <form action="/bbt/log/{{ r.id }}/delete" method="post" style="display:inline; margin:0;"
+                onsubmit="return confirm('确认删除这条体温记录？');">
+            {% include "components/csrf.html" %}
+            <button type="submit" class="btn-secondary" style="padding:4px 12px; font-size:12px;">删除</button>
+          </form>
         </li>
       {% endfor %}
     </ul>
@@ -55,6 +62,13 @@
 {% endblock %}
 {% block scripts %}
 <script>
+function friendlyErr(code, message, status) {
+  const map = {
+    invalid_bbt_reading: "体温读数无效（合理范围 34.5-39.5℃）。",
+    validation_failed: "填写的数据有问题，检查日期和数值。",
+  };
+  return map[code] || message || ("失败 (" + status + ")");
+}
 const csrf = document.querySelector("input[name=csrf_token]")?.value || "";
 document.getElementById("bbt-form").addEventListener("submit", async (e) => {
   const f = e.target;
@@ -73,7 +87,8 @@ document.getElementById("bbt-form").addEventListener("submit", async (e) => {
     });
     if (r.ok) { location.reload(); return; }
     const body = await r.json().catch(() => ({}));
-    errEl.textContent = (body.error && body.error.message) || ("失败 (" + r.status + ")");
+    const err = body.error || {};
+    errEl.textContent = friendlyErr(err.code, err.message, r.status);
     errEl.hidden = false;
   } catch (err) {
     errEl.textContent = "网络错误，请重试";

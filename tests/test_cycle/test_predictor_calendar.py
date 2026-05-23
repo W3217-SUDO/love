@@ -29,12 +29,15 @@ def test_calendar_inactive_with_no_periods(db):
     assert r.source == "calendar"
 
 
-def test_calendar_inactive_with_one_period(db):
+def test_calendar_uses_default_cycle_with_one_period(db):
     u = _user(db)
     _seed_cycles(db, u.id, [date(2026, 4, 1)])
     sig = CalendarSignal()
     r = sig.evaluate(db, user_id=u.id, target_date=date(2026, 5, 22))
-    assert r.active is False
+    assert r.active is True
+    assert r.confidence == 0.20
+    assert r.predicted_next_period == date(2026, 5, 27)
+    assert "avg_cycle=28d" in r.evidence
 
 
 def test_calendar_predicts_with_two_periods(db):

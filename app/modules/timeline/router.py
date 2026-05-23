@@ -142,12 +142,12 @@ def _build_calendar(year: int, month: int, periods: list[Period], pred) -> list[
     """Return 6×7 grid of {day, is_period, is_predicted_period, is_fertile} or None."""
     period_dates: set[date] = set()
     for p in periods:
-        if p.start_date.year == year and p.start_date.month == month:
-            end = p.end_date or p.start_date
-            d = p.start_date
-            while d <= end and d.month == month:
+        end = p.end_date or p.start_date
+        d = p.start_date
+        while d <= end:
+            if d.year == year and d.month == month:
                 period_dates.add(d)
-                d += timedelta(days=1)
+            d += timedelta(days=1)
 
     predicted_period_dates: set[date] = set()
     if (
