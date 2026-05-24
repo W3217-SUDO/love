@@ -21,6 +21,7 @@ from app.modules.cycle.html_router import router as cycle_html_router
 from app.modules.cycle.router import router as cycle_router
 from app.modules.daily_log.router import router as daily_log_router
 from app.modules.diary.router import router as diary_router
+from app.modules.import_.router import router as import_router
 from app.modules.media.router import router as media_router
 from app.modules.reports.router import router as reports_router
 from app.modules.settings.router import router as settings_router
@@ -99,6 +100,7 @@ app.include_router(cycle_html_router)
 app.include_router(admin_router)
 app.include_router(daily_log_router)
 app.include_router(diary_router)
+app.include_router(import_router)
 app.include_router(media_router)
 app.include_router(reports_router)
 app.include_router(settings_router)

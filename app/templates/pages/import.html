@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}导入数据 · Couple Diary{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>导入数据</h1>
+  <p class="subtitle">把 Flo CSV 或 Apple Health 导出的记录导入到经期、标签、基础体温和健康指标里。</p>
+
+  <form action="/me/import" method="post" enctype="multipart/form-data" style="margin-top: var(--space-4);">
+    {% include "components/csrf.html" %}
+    <div class="form-row">
+      <label class="form-label" for="source">来源</label>
+      <select class="input" id="source" name="source">
+        <option value="flo">Flo CSV</option>
+        <option value="apple_health">Apple Health</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="file">文件</label>
+      <input class="input" id="file" name="file" type="file" required>
+    </div>
+    <button class="btn" type="submit" style="width:100%;">开始导入</button>
+  </form>
+</section>
+
+<section>
+  <h2 style="margin: var(--space-6) 0 var(--space-3);">状态</h2>
+  {% if jobs %}
+    {% for job in jobs %}
+      {% include "fragments/import_status.html" %}
+    {% endfor %}
+  {% else %}
+    <div class="card">
+      <p class="subtitle">还没有导入任务。</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

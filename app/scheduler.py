@@ -18,6 +18,7 @@ from sqlalchemy import select
 
 from app.config import get_settings
 from app.db import SessionLocal
+from app.modules.import_.service import run_pending_import_jobs
 from app.modules.media.models import Media
 
 log = logging.getLogger(__name__)
@@ -119,6 +120,18 @@ def job_cleanup_orphan_media() -> None:
     )
 
 
+def job_process_pending_imports() -> None:
+    """Process in-memory pending import jobs when bytes are still available."""
+    try:
+        with SessionLocal() as db:
+            processed = run_pending_import_jobs(db)
+            if processed:
+                db.commit()
+        log.info("process_pending_imports: processed %d jobs", processed)
+    except Exception:
+        log.exception("process_pending_imports crashed")
+
+
 def _prune_old_files(d: Path, *, days: int) -> None:
     cutoff = datetime.utcnow().timestamp() - days * 86400
     for p in d.iterdir():
@@ -139,6 +152,12 @@ def start_scheduler() -> None:
     _scheduler.add_job(job_mirror_uploads, "cron", hour=3, minute=15, id="mirror_uploads")
     _scheduler.add_job(
         job_cleanup_orphan_media, "cron", hour=3, minute=30, id="cleanup_orphan_media",
+    )
+    _scheduler.add_job(
+        job_process_pending_imports,
+        "interval",
+        minutes=10,
+        id="process_pending_imports",
     )
     _scheduler.start()
     log.info("scheduler started with %d jobs", len(_scheduler.get_jobs()))

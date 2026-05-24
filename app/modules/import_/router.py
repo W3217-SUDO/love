@@ -1,0 +1,82 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
+from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.db import get_db
+from app.deps import get_current_user
+from app.errors import NotFound, ValidationFailed
+from app.modules.auth.models import User
+from app.modules.import_.models import ImportJob
+from app.modules.import_.service import create_import_job
+from app.templating import templates
+
+router = APIRouter(tags=["import"])
+
+
+@router.get("/me/import", response_class=HTMLResponse)
+def import_page(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> HTMLResponse:
+    jobs = _list_jobs(db, user.id)
+    return templates.TemplateResponse(
+        request=request,
+        name="pages/import.html",
+        context={"active": "me", "jobs": jobs},
+    )
+
+
+@router.post("/me/import")
+async def import_upload(
+    source: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> RedirectResponse:
+    if source not in {"flo", "apple_health"}:
+        raise ValidationFailed("unsupported import source")
+    raw = await file.read()
+    if not raw:
+        raise ValidationFailed("empty import file")
+    filename = file.filename or "upload"
+    create_import_job(
+        db,
+        user_id=user.id,
+        source=source,
+        filename=filename,
+        raw_bytes=raw,
+    )
+    db.commit()
+    return RedirectResponse(url="/me/import", status_code=303)
+
+
+@router.get("/me/import/_fragment/status/{job_id}", response_class=HTMLResponse)
+def import_status_fragment(
+    job_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> HTMLResponse:
+    job = db.get(ImportJob, job_id)
+    if job is None or job.created_by_id != user.id:
+        raise NotFound("import job not found")
+    return templates.TemplateResponse(
+        request=request,
+        name="fragments/import_status.html",
+        context={"job": job},
+    )
+
+
+def _list_jobs(db: Session, user_id: int) -> list[ImportJob]:
+    return list(
+        db.execute(
+            select(ImportJob)
+            .where(ImportJob.created_by_id == user_id)
+            .order_by(ImportJob.created_at.desc(), ImportJob.id.desc())
+            .limit(20),
+        ).scalars(),
+    )

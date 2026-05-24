@@ -1,0 +1,29 @@
+<div class="card" id="import-job-{{ job.id }}">
+  <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+    <div>
+      <strong>{{ job.filename }}</strong>
+      <p class="subtitle" style="margin:4px 0 0;">{{ job.source }}</p>
+    </div>
+    <span class="pill" aria-label="状态">
+      {% if job.status == "success" %}成功{% elif job.status == "failed" %}失败{% elif job.status == "processing" %}处理中{% else %}等待中{% endif %}
+    </span>
+  </div>
+
+  {% if job.summary_json %}
+    <p style="margin:12px 0 0;">
+      经期 {{ job.summary_json.get("periods", 0) }} 条，
+      标签 {{ job.summary_json.get("tags", 0) }} 条，
+      体温 {{ job.summary_json.get("bbt_readings", 0) }} 条，
+      健康指标 {{ job.summary_json.get("health_metrics", 0) }} 条
+    </p>
+    {% if job.summary_json.get("skipped", 0) or job.summary_json.get("unmapped", 0) %}
+      <p class="subtitle" style="margin:6px 0 0;">
+        跳过 {{ job.summary_json.get("skipped", 0) }} 条，未映射 {{ job.summary_json.get("unmapped", 0) }} 条
+      </p>
+    {% endif %}
+  {% endif %}
+
+  {% if job.error_message %}
+    <p style="color:var(--color-danger); margin:12px 0 0;">{{ job.error_message }}</p>
+  {% endif %}
+</div>
