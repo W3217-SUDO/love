@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}趋势 · Couple Diary{% endblock %}
+{% block content %}
+<section class="card page-header">
+  <h1 class="page-title">趋势中心</h1>
+  <p class="subtitle">把每天的小记录，整理成可以回看的身体与情绪趋势。</p>
+</section>
+
+<section class="card">
+  <h2>基础体温</h2>
+  <p class="subtitle">BBT 曲线用于观察排卵后的体温变化。</p>
+  {% include "fragments/line_chart.html" with context %}
+  <a class="btn btn-secondary" href="/charts/bbt.json">查看 BBT JSON</a>
+</section>
+
+<section class="card">
+  <h2>周期长度</h2>
+  <p class="subtitle">按经期开始日估算周期间隔，数据不足时保持为空。</p>
+  <a class="btn btn-secondary" href="/charts/cycle.json">查看周期 JSON</a>
+</section>
+
+<section class="card">
+  <h2>标签频率</h2>
+  <div class="action-grid">
+    <a class="btn" href="/charts/tags/symptoms.json">症状</a>
+    <a class="btn" href="/charts/tags/mood.json">心情</a>
+    <a class="btn" href="/charts/tags/sex.json">亲密</a>
+  </div>
+</section>
+
+<section class="card">
+  <h2>健康指标</h2>
+  <p class="subtitle">可按静息心率、HRV、睡眠等指标查看趋势。</p>
+  <a class="btn btn-secondary" href="/charts/health/resting_heart_rate.json">静息心率</a>
+</section>
+{% endblock %}

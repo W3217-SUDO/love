@@ -1,0 +1,13 @@
+{% set series = summaries.bbt if summaries is defined else none %}
+{% if series and series.points %}
+  <ol class="chart-list">
+    {% for point in series.points[-7:] %}
+      <li>
+        <span>{{ point.date }}</span>
+        <strong>{{ point.value }}</strong>
+      </li>
+    {% endfor %}
+  </ol>
+{% else %}
+  <p class="empty-state">还没有足够的数据生成趋势。</p>
+{% endif %}

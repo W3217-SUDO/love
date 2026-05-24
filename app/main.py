@@ -16,6 +16,7 @@ from app.errors import register_exception_handlers
 from app.logging import setup_logging
 from app.modules.admin_router import router as admin_router
 from app.modules.auth.router import router as auth_router
+from app.modules.charts.router import router as charts_router
 from app.modules.cycle.html_router import router as cycle_html_router
 from app.modules.cycle.router import router as cycle_router
 from app.modules.daily_log.router import router as daily_log_router
@@ -101,6 +102,7 @@ app.include_router(media_router)
 app.include_router(settings_router)
 app.include_router(timeline_router)
 app.include_router(trip_router)
+app.include_router(charts_router)
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
