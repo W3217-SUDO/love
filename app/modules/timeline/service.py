@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.modules.auth.models import Couple, User
 from app.modules.cycle.predictor import CombinedPredictor, CyclePrediction
 from app.modules.cycle.predictor.base import SignalResult
+from app.modules.cycle.predictor.calendar import CalendarSignal
 from app.modules.cycle.service import list_bbt
 from app.modules.daily_log.catalog import TAG_BY_KEY
 from app.modules.daily_log.models import DailyTag
@@ -188,10 +189,10 @@ def build_today_snapshot(
     if partner is not None:
         partner_settings = ensure_settings(db, partner.id)
         if can_partner_view(partner_settings, "cycle"):
-            p_pred = CombinedPredictor().predict(
+            p_signal = CalendarSignal().evaluate(
                 db, user_id=partner.id, target_date=target_date,
             )
-            partner_phase = p_pred.phase if p_pred.phase != "unknown" else None
+            partner_phase = p_signal.phase if p_signal.active and p_signal.phase else None
         if can_partner_view(partner_settings, "daily_log"):
             partner_tags = _enrich_tags(
                 list_tags_for_day(db, user_id=partner.id, date=target_date),
