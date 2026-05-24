@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}报告 · Couple Diary{% endblock %}
+{% block content %}
+<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+  <h1 style="margin:0;">报告</h1>
+  <a class="btn" href="/reports/new">新建报告</a>
+</div>
+
+{% if reports %}
+  {% for report in reports %}
+    <div class="card">
+      <h2 style="margin:0 0 var(--space-2);">
+        <a href="/reports/{{ report.id }}" style="color:var(--color-text);">{{ report.title }}</a>
+      </h2>
+      <p class="subtitle" style="margin:0;">
+        {{ report.date.isoformat() }} · {{ report.report_type or 'general' }}
+        {% if report.visibility == 'private' %} · 私密{% else %} · 共享{% endif %}
+      </p>
+      {% if report.notes %}
+        <p style="white-space:pre-line;">{{ report.notes }}</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="card" style="text-align:center; padding: var(--space-8);">
+    <p class="subtitle">还没有报告。</p>
+    <a class="btn" href="/reports/new" style="margin-top: var(--space-4);">新建报告</a>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ report.title }} · 报告{% endblock %}
+{% block content %}
+<div class="card">
+  <p class="subtitle" style="margin-bottom: var(--space-1);">
+    {{ report.date.isoformat() }} · {{ report.report_type or 'general' }}
+    {% if report.visibility == 'private' %} · 私密{% else %} · 共享{% endif %}
+  </p>
+  <h1 style="margin: 0 0 var(--space-4);">{{ report.title }}</h1>
+  {% if report.notes %}
+    <div style="white-space: pre-line; color: var(--color-text); line-height: 1.7;">{{ report.notes }}</div>
+  {% endif %}
+  {% if download_url %}
+    <a class="btn" href="{{ download_url }}" target="_blank" style="margin-top: var(--space-4);">下载报告</a>
+  {% endif %}
+</div>
+
+{% if is_owner %}
+  <div class="card" style="display:flex; gap: var(--space-3);">
+    <a class="btn-secondary" href="/reports/{{ report.id }}/edit" style="flex:1; text-align:center;">编辑</a>
+    <form action="/reports/{{ report.id }}/delete" method="post" style="flex:1;"
+          onsubmit="return confirm('确认删除这份报告？');">
+      <button class="btn-secondary" type="submit" style="width:100%; color:var(--color-error);">删除</button>
+    </form>
+  </div>
+{% endif %}
+{% endblock %}

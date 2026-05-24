@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑报告' if report else '新建报告' }} · Couple Diary{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>{{ '编辑报告' if report else '新建报告' }}</h1>
+  <form action="{{ '/reports/' ~ report.id if report else '/reports' }}" method="post">
+    <div class="form-row">
+      <label class="form-label" for="title">标题</label>
+      <input class="input" id="title" name="title" type="text" value="{{ report.title if report else '' }}" maxlength="120" required>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="date">日期</label>
+      <input class="input" id="date" name="date" type="date" value="{{ report.date.isoformat() if report else '' }}" required>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="report_type">类型</label>
+      <input class="input" id="report_type" name="report_type" type="text" value="{{ report.report_type if report else 'general' }}" maxlength="64">
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="notes">备注</label>
+      <textarea class="input" id="notes" name="notes" rows="6">{{ report.notes if report and report.notes else '' }}</textarea>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="visibility">谁能看</label>
+      <select class="input" id="visibility" name="visibility">
+        <option value="private" {% if not report or report.visibility == 'private' %}selected{% endif %}>仅自己可见</option>
+        <option value="shared" {% if report and report.visibility == 'shared' %}selected{% endif %}>伴侣可见</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="media_id">媒体 ID</label>
+      <input class="input" id="media_id" name="media_id" type="number" min="1" value="{{ report.media_id if report and report.media_id else '' }}">
+    </div>
+    <button class="btn" type="submit" style="width:100%;">保存</button>
+  </form>
+</div>
+{% endblock %}

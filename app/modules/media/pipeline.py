@@ -10,11 +10,12 @@ from PIL import Image, UnidentifiedImageError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
+from app import config
 from app.modules.media.models import Media
 
 MAX_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
-ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp"}
+ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp", "application/pdf"}
+PDF_MAGIC = b"%PDF-"
 THUMB_MAX = (400, 400)
 PREVIEW_MAX_LONG_EDGE = 1200
 
@@ -67,18 +68,6 @@ def process_upload(
     if mime not in ALLOWED_MIME:
         raise UnsupportedMimeError(f"mime {mime!r} not allowed")
 
-    # Magic-byte validation: try to open as image and verify.
-    try:
-        probe = Image.open(io.BytesIO(payload))
-        probe.verify()  # raises on non-image / corrupt image
-    except UnidentifiedImageError as exc:
-        raise PipelineError(f"not a valid image: {exc}") from exc
-    except Exception as exc:  # Pillow raises a variety of exceptions
-        raise PipelineError(f"not a valid image: {exc}") from exc
-
-    # Re-open since verify() leaves the file pointer at EOF
-    img = Image.open(io.BytesIO(payload))
-
     sha = hashlib.sha256(payload).hexdigest()
 
     # Dedup by (owner_id, sha256)
@@ -90,7 +79,7 @@ def process_upload(
     if existing is not None:
         return existing
 
-    settings = get_settings()
+    settings = config.get_settings()
     upload_dir = Path(settings.upload_dir)
     now = datetime.now()
     rel_dir = (
@@ -98,6 +87,33 @@ def process_upload(
     )
     abs_dir = upload_dir / rel_dir
     abs_dir.mkdir(parents=True, exist_ok=True)
+
+    if mime == "application/pdf":
+        if not payload.startswith(PDF_MAGIC):
+            raise PipelineError("not a valid PDF")
+        original_path = abs_dir / f"{sha}.pdf"
+        original_path.write_bytes(payload)
+        row = Media(
+            owner_id=owner_id, kind="pdf", sha256=sha, mime=mime,
+            size_bytes=len(payload), width=None, height=None,
+            original_path=str(original_path), thumb_path=None,
+            preview_path=None, exif_taken_at=None,
+        )
+        db.add(row)
+        db.flush()
+        return row
+
+    # Magic-byte validation: try to open as image and verify.
+    try:
+        probe = Image.open(io.BytesIO(payload))
+        probe.verify()  # raises on non-image / corrupt image
+    except UnidentifiedImageError as exc:
+        raise PipelineError(f"not a valid image: {exc}") from exc
+    except Exception as exc:  # Pillow raises a variety of exceptions
+        raise PipelineError(f"not a valid image: {exc}") from exc
+
+    # Re-open since verify() leaves the file pointer at EOF
+    img = Image.open(io.BytesIO(payload))
 
     # Save original as WebP (strips EXIF naturally)
     original_path = abs_dir / f"{sha}.webp"

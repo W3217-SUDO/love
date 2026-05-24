@@ -31,8 +31,10 @@ router = APIRouter(tags=["media"])
 
 def _to_out(media) -> MediaOut:
     out = MediaOut.model_validate(media)
-    out.thumb_url = f"/media/{media.id}/thumb?{sign_media_url(media.id)}"
-    out.preview_url = f"/media/{media.id}/preview?{sign_media_url(media.id)}"
+    if media.thumb_path:
+        out.thumb_url = f"/media/{media.id}/thumb?{sign_media_url(media.id)}"
+    if media.preview_path:
+        out.preview_url = f"/media/{media.id}/preview?{sign_media_url(media.id)}"
     return out
 
 
@@ -108,10 +110,10 @@ def _serve_file(
     path = paths[which]
     if not path or not Path(path).is_file():
         raise NotFound("file missing on disk")
-    # All derivatives are WebP; original is also stored as WebP (lossless conv).
+    media_type = media.mime if which == "original" else "image/webp"
     return FileResponse(
         path,
-        media_type="image/webp",
+        media_type=media_type,
         headers={"Cache-Control": "private, max-age=86400"},
     )
 
