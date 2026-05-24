@@ -1,7 +1,10 @@
+from datetime import date, timedelta
+
 from sqlalchemy import delete
 
 from app.modules.auth.invite import create_couple_and_invites, redeem_invite
 from app.modules.auth.models import AuthSession, Couple, InviteToken, User
+from app.modules.cycle.service import log_period_end, log_period_start
 
 
 def _login(client, db, password="strongpassword"):
@@ -33,6 +36,22 @@ def test_root_renders_today(client, db):
     assert "D" in body  # cycle ring rendered (D1 etc.)
 
 
+def test_today_links_to_m2_features(client, db):
+    _login(client, db)
+    r = client.get("/", headers={"Accept": "text/html"})
+    assert r.status_code == 200
+    body = r.text
+    for href in (
+        "/log/today",
+        "/cycle/log",
+        "/bbt/log",
+        "/reports/new",
+        "/charts",
+        "/me/settings",
+    ):
+        assert f'href="{href}"' in body
+
+
 def test_partner_card_fragment(client, db):
     _login(client, db)
     r = client.get("/today/partner-card", headers={"Accept": "text/html"})
@@ -41,10 +60,37 @@ def test_partner_card_fragment(client, db):
     assert "Bob" in body or "今天" in body
 
 
+def test_partner_card_marks_shared_only_data(client, db):
+    _login(client, db)
+    r = client.get("/today/partner-card", headers={"Accept": "text/html"})
+    assert r.status_code == 200
+    assert "仅显示共享" in r.text
+
+
 def test_predictor_card_fragment(client, db):
     _login(client, db)
     r = client.get("/today/predictor-card", headers={"Accept": "text/html"})
     assert r.status_code == 200
+
+
+def test_predictor_card_shows_chinese_confidence_when_available(client, db):
+    _login(client, db)
+    alice = db.query(User).filter_by(username="alice").one()
+    start = date.today() - timedelta(days=28)
+    log_period_start(db, user_id=alice.id, start_date=start)
+    log_period_end(
+        db,
+        user_id=alice.id,
+        start_date=start,
+        end_date=start + timedelta(days=4),
+    )
+    db.flush()
+
+    r = client.get("/today/predictor-card", headers={"Accept": "text/html"})
+    assert r.status_code == 200
+    body = r.text
+    assert "置信度" in body
+    assert "预测依据" in body
 
 
 def test_cycle_ring_fragment(client, db):
@@ -60,6 +106,16 @@ def test_calendar_current_month(client, db):
     assert r.status_code == 200
     body = r.text
     assert "<table" in body or "weeks" not in body  # at minimum renders
+
+
+def test_calendar_legend_is_readable(client, db):
+    _login(client, db)
+    r = client.get("/calendar", headers={"Accept": "text/html"})
+    assert r.status_code == 200
+    body = r.text
+    assert "经期" in body
+    assert "预测经期" in body
+    assert "易孕期" in body
 
 
 def test_calendar_specific_month(client, db):

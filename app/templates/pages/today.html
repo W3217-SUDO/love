@@ -9,9 +9,12 @@
 <section class="card">
   <h2>快捷记录</h2>
   <div class="action-grid">
-    <a class="btn" href="/log/{{ date.isoformat() }}">今天的标签</a>
-    <a class="btn" href="/cycle/log">经期</a>
-    <a class="btn" href="/bbt/log">体温</a>
+    <a class="btn" href="/log/today">今日记录</a>
+    <a class="btn" href="/cycle/log">记录经期</a>
+    <a class="btn" href="/bbt/log">记录体温</a>
+    <a class="btn btn-secondary" href="/reports/new">上传报告</a>
+    <a class="btn btn-secondary" href="/charts">查看趋势</a>
+    <a class="btn btn-secondary" href="/me/settings">隐私设置</a>
   </div>
 </section>
 
@@ -32,7 +35,7 @@
   {% else %}
     <p class="empty-state">还没有记录标签</p>
   {% endif %}
-  <a class="btn btn-secondary" href="/log/{{ date.isoformat() }}">打开标签记录</a>
+  <a class="btn btn-secondary" href="/log/today">打开今日记录</a>
 </section>
 
 <section class="card">

@@ -13,13 +13,35 @@
     {% if prediction.next_period %}
       <p class="subtitle">下次经期：{{ prediction.next_period.isoformat() }}</p>
     {% endif %}
-    <p class="subtitle">阶段：{{ prediction.phase }} · 置信度 {{ prediction.confidence_level }}</p>
+    <p class="subtitle">
+      阶段：
+      {% if prediction.phase == "menstrual" %}经期
+      {% elif prediction.phase == "follicular" %}卵泡期
+      {% elif prediction.phase == "fertile" %}易孕期
+      {% elif prediction.phase == "ovulation" %}排卵日
+      {% elif prediction.phase == "luteal" %}黄体期
+      {% else %}{{ prediction.phase }}{% endif %}
+      · 置信度：
+      {% if prediction.confidence_level == "high" %}高
+      {% elif prediction.confidence_level == "medium" %}中
+      {% else %}低{% endif %}
+      {% if prediction.confidence_score is defined %}（{{ (prediction.confidence_score * 100) | round | int }}%）{% endif %}
+    </p>
     {% if prediction.evidence %}
       <details style="margin-top: var(--space-2);">
-        <summary class="subtitle" style="cursor:pointer;">查看依据</summary>
+        <summary class="subtitle" style="cursor:pointer;">预测依据</summary>
         <ul style="font-size:13px; color:var(--color-text-soft); padding-left:var(--space-5); margin-top:var(--space-2);">
           {% for e in prediction.evidence %}
-            <li>{{ e.source }}{% if e.active %} ✓{% else %} ✗{% endif %} — {{ e.evidence }}</li>
+            <li>
+              {% if e.source == "calendar" %}周期记录
+              {% elif e.source == "bbt" %}基础体温
+              {% elif e.source == "lh" %}LH 试纸
+              {% elif e.source == "mucus" %}分泌物
+              {% elif e.source == "health" %}健康指标
+              {% else %}{{ e.source }}{% endif %}
+              {% if e.active %} ✓{% else %} · 暂无有效信号{% endif %}
+              — {{ e.evidence }}
+            </li>
           {% endfor %}
         </ul>
       </details>

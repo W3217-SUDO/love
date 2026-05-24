@@ -5,6 +5,7 @@
      hx-swap="outerHTML">
   {% if partner %}
     <h3>{{ partner.display_name }} 的今天</h3>
+    <p class="subtitle">仅显示共享的周期阶段和今日标签，不包含私密日记、报告或健康数据。</p>
     {% if partner_phase %}
       <p class="subtitle">{{ partner_phase }}</p>
     {% endif %}
