@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}设置 · Couple Diary{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>设置</h1>
+  <p class="subtitle">管理个人资料、隐私可见性、主题和提醒偏好。</p>
+</section>
+
+<section class="card">
+  <h2>个人资料</h2>
+  <p>显示名：<strong>{{ user.display_name }}</strong></p>
+  <p>用户名：<code>{{ user.username }}</code></p>
+  <p>身份：{% if user.role == "he" %}他 / he{% else %}她 / she{% endif %}</p>
+</section>
+
+<section class="card">
+  <h2>隐私可见性</h2>
+  <p class="subtitle">选择哪些数据可以给伴侣查看。</p>
+  {% for data_type in data_types %}
+    <form action="/me/settings/visibility" method="post" class="form-row" style="margin-top: var(--space-4);">
+      {% include "components/csrf.html" %}
+      <input type="hidden" name="data_type" value="{{ data_type }}">
+      <label class="form-label" for="visibility-{{ data_type }}">{{ labels[data_type] }}</label>
+      <select class="input" id="visibility-{{ data_type }}" name="visibility">
+        <option value="private" {% if settings.visibility.get(data_type) == "private" %}selected{% endif %}>仅自己可见</option>
+        <option value="shared" {% if settings.visibility.get(data_type) == "shared" %}selected{% endif %}>伴侣可见</option>
+      </select>
+      <button type="submit" class="btn-secondary" style="width:100%">保存</button>
+    </form>
+  {% endfor %}
+</section>
+
+<section class="card">
+  <h2>主题</h2>
+  <p>当前主题：<strong>{{ settings.theme }}</strong></p>
+  <p class="subtitle">系统主题会跟随设备外观。</p>
+</section>
+
+<section class="card">
+  <h2>提醒</h2>
+  <ul>
+    <li>每日记录：{{ "开启" if settings.notification_prefs.daily_record.enabled else "关闭" }}</li>
+    <li>经期提醒：{{ "开启" if settings.notification_prefs.period.enabled else "关闭" }}</li>
+    <li>易孕期提醒：{{ "开启" if settings.notification_prefs.fertile_window.enabled else "关闭" }}</li>
+    <li>基础体温：{{ "开启" if settings.notification_prefs.bbt.enabled else "关闭" }}</li>
+    <li>伴侣动态：{{ "开启" if settings.notification_prefs.partner_activity.enabled else "关闭" }}</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>数据</h2>
+  <div style="display:grid; gap: var(--space-3);">
+    <a class="btn-secondary" href="/me/import">导入数据</a>
+    <a class="btn-secondary" href="/charts">查看图表</a>
+    <a class="btn-secondary" href="/reports">查看报告</a>
+  </div>
+</section>
+{% endblock %}

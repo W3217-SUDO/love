@@ -21,6 +21,7 @@ from app.modules.cycle.router import router as cycle_router
 from app.modules.daily_log.router import router as daily_log_router
 from app.modules.diary.router import router as diary_router
 from app.modules.media.router import router as media_router
+from app.modules.settings.router import router as settings_router
 from app.modules.timeline.router import router as timeline_router
 from app.modules.trip.router import router as trip_router
 from app.rate_limit import limiter
@@ -97,6 +98,7 @@ app.include_router(admin_router)
 app.include_router(daily_log_router)
 app.include_router(diary_router)
 app.include_router(media_router)
+app.include_router(settings_router)
 app.include_router(timeline_router)
 app.include_router(trip_router)
 
