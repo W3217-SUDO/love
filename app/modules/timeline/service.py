@@ -61,7 +61,17 @@ def _source_label(source: str) -> str:
     }.get(source, source)
 
 
-def _translate_evidence(text: str) -> str:
+def _fallback_evidence(source: str) -> str:
+    return {
+        "calendar": "已记录周期证据",
+        "bbt": "已记录基础体温证据",
+        "lh": "已记录排卵测试证据",
+        "mucus": "已记录辅助健康证据",
+        "health": "已记录辅助健康证据",
+    }.get(source, "已记录辅助健康证据")
+
+
+def _translate_evidence(text: str, *, source: str) -> str:
     avg_match = re.search(
         r"avg_cycle=(?P<cycle>\d+)d \(sigma=(?P<sigma>[\d.]+)\), "
         r"avg_period=(?P<period>\d+)d, n=(?P<count>\d+)",
@@ -103,7 +113,7 @@ def _translate_evidence(text: str) -> str:
         "no egg-white discharge logged today": "今日未记录蛋清状分泌物",
         "no resting heart rate logged today": "今日未记录静息心率",
     }
-    return translations.get(text, text)
+    return translations.get(text, _fallback_evidence(source))
 
 
 def format_predictor_evidence(evidence: list[SignalResult]) -> list[EvidenceDisplay]:
@@ -111,7 +121,7 @@ def format_predictor_evidence(evidence: list[SignalResult]) -> list[EvidenceDisp
         EvidenceDisplay(
             source_label=_source_label(item.source),
             status_label="已纳入预测" if item.active else "暂无有效信号",
-            evidence=_translate_evidence(item.evidence),
+            evidence=_translate_evidence(item.evidence, source=item.source),
             active=item.active,
         )
         for item in evidence

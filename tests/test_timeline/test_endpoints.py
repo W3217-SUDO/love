@@ -4,6 +4,7 @@ from sqlalchemy import delete
 
 from app.modules.auth.invite import create_couple_and_invites, redeem_invite
 from app.modules.auth.models import AuthSession, Couple, InviteToken, User
+from app.modules.cycle.predictor import CyclePrediction, SignalResult
 from app.modules.cycle.service import log_period_end, log_period_start
 
 
@@ -117,6 +118,41 @@ def test_predictor_card_translates_internal_evidence(client, db):
     assert "avg_cycle=" not in body
     assert "need >=" not in body
     assert "no positive LH" not in body
+
+
+def test_predictor_card_masks_unknown_bbt_evidence(client, db, monkeypatch):
+    _login(client, db)
+    today = date.today()
+
+    class FakePredictor:
+        def predict(self, db, *, user_id, target_date):
+            return CyclePrediction(
+                target_date=target_date,
+                next_period=today + timedelta(days=14),
+                ovulation=today,
+                fertile_window=(today - timedelta(days=2), today + timedelta(days=2)),
+                phase="ovulation",
+                confidence_level="medium",
+                confidence_score=0.5,
+                evidence=[
+                    SignalResult(
+                        source="bbt",
+                        active=True,
+                        confidence=0.6,
+                        evidence=f"BBT detected ovulation on {today.isoformat()}",
+                        predicted_ovulation=today,
+                    ),
+                ],
+            )
+
+    monkeypatch.setattr("app.modules.timeline.router.CombinedPredictor", FakePredictor)
+
+    r = client.get("/today/predictor-card", headers={"Accept": "text/html"})
+
+    assert r.status_code == 200
+    body = r.text
+    assert "已记录基础体温证据" in body
+    assert "BBT detected" not in body
 
 
 def test_cycle_ring_fragment(client, db):
