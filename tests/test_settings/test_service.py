@@ -59,3 +59,14 @@ def test_can_partner_view_uses_defaults_and_data_types(db):
     assert can_partner_view(settings, "trip") is True
     assert can_partner_view(settings, "report") is False
     assert can_partner_view(settings, "health") is False
+
+
+def test_notification_defaults_are_not_shared_between_users(db):
+    alice = _user(db, "alice")
+    bob = _user(db, "bob")
+    alice_settings = ensure_settings(db, alice.id)
+
+    alice_settings.notification_prefs["daily_record"]["enabled"] = True
+    bob_settings = ensure_settings(db, bob.id)
+
+    assert bob_settings.notification_prefs["daily_record"]["enabled"] is False

@@ -1,3 +1,4 @@
+from copy import deepcopy
 from enum import StrEnum
 
 from sqlalchemy import select
@@ -32,6 +33,10 @@ DEFAULT_NOTIFICATION_PREFS: dict[str, object] = {
 }
 
 
+def _default_notification_prefs() -> dict[str, object]:
+    return deepcopy(DEFAULT_NOTIFICATION_PREFS)
+
+
 def ensure_settings(db: Session, user_id: int) -> UserSettings:
     settings = db.scalar(select(UserSettings).where(UserSettings.user_id == user_id))
     if settings is not None:
@@ -45,23 +50,25 @@ def ensure_settings(db: Session, user_id: int) -> UserSettings:
         notification_prefs = dict(settings.notification_prefs or {})
         for key, value in DEFAULT_NOTIFICATION_PREFS.items():
             if key not in notification_prefs:
-                notification_prefs[key] = value
+                notification_prefs[key] = deepcopy(value)
                 changed = True
 
         if changed:
             settings.visibility = visibility
             settings.notification_prefs = notification_prefs
-            db.flush()
+            db.commit()
+            db.refresh(settings)
         return settings
 
     settings = UserSettings(
         user_id=user_id,
         theme="system",
         visibility=dict(DEFAULT_VISIBILITY),
-        notification_prefs=dict(DEFAULT_NOTIFICATION_PREFS),
+        notification_prefs=_default_notification_prefs(),
     )
     db.add(settings)
-    db.flush()
+    db.commit()
+    db.refresh(settings)
     return settings
 
 
@@ -77,11 +84,11 @@ def set_visibility(
     values = dict(settings.visibility or {})
     values[data_type] = visibility.value
     settings.visibility = values
-    db.flush()
+    db.commit()
+    db.refresh(settings)
     return settings
 
 
 def can_partner_view(settings: UserSettings, data_type: str) -> bool:
     visibility = dict(settings.visibility or {})
     return visibility.get(data_type, DEFAULT_VISIBILITY.get(data_type)) == Visibility.SHARED.value
-

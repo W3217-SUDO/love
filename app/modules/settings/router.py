@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.deps import get_current_user
+from app.errors import ValidationFailed
 from app.modules.auth.models import User
 from app.modules.settings.service import (
     DATA_TYPES,
@@ -54,7 +55,8 @@ def update_visibility(
     user: User = Depends(get_current_user),
 ) -> RedirectResponse:
     settings = ensure_settings(db, user.id)
-    set_visibility(db, settings, data_type, visibility)
-    db.commit()
+    try:
+        set_visibility(db, settings, data_type, visibility)
+    except ValueError as exc:
+        raise ValidationFailed(str(exc)) from exc
     return RedirectResponse("/me/settings", status_code=303)
-
