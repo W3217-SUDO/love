@@ -16,6 +16,7 @@ from app.modules.timeline.service import (
     build_today_snapshot,
     days_together,
     find_partner,
+    format_predictor_evidence,
 )
 from app.templating import templates
 
@@ -77,6 +78,7 @@ def today_page(
             "phase_color": _phase_color(snap.cycle_prediction.phase),
             "ring_progress": ring_progress,
             "prediction": snap.cycle_prediction,
+            "prediction_evidence": format_predictor_evidence(snap.cycle_prediction.evidence),
             "active_tags": snap.active_tags,
             "recent_bbt": snap.recent_bbt,
             "partner": snap.partner,
@@ -113,7 +115,10 @@ def today_predictor_card(
     pred = CombinedPredictor().predict(db, user_id=user.id, target_date=date.today())
     return templates.TemplateResponse(
         request=request, name="fragments/predictor_card.html",
-        context={"prediction": pred},
+        context={
+            "prediction": pred,
+            "prediction_evidence": format_predictor_evidence(pred.evidence),
+        },
     )
 
 

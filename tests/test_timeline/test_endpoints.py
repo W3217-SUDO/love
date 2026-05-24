@@ -93,6 +93,32 @@ def test_predictor_card_shows_chinese_confidence_when_available(client, db):
     assert "预测依据" in body
 
 
+def test_predictor_card_translates_internal_evidence(client, db):
+    _login(client, db)
+    alice = db.query(User).filter_by(username="alice").one()
+    start = date.today() - timedelta(days=28)
+    log_period_start(db, user_id=alice.id, start_date=start)
+    log_period_end(
+        db,
+        user_id=alice.id,
+        start_date=start,
+        end_date=start + timedelta(days=4),
+    )
+    db.flush()
+
+    r = client.get("/today/predictor-card", headers={"Accept": "text/html"})
+
+    assert r.status_code == 200
+    body = r.text
+    assert "预测依据" in body
+    assert "周期记录" in body
+    assert "平均周期" in body
+    assert "no period history" not in body
+    assert "avg_cycle=" not in body
+    assert "need >=" not in body
+    assert "no positive LH" not in body
+
+
 def test_cycle_ring_fragment(client, db):
     _login(client, db)
     r = client.get("/today/cycle-ring", headers={"Accept": "text/html"})

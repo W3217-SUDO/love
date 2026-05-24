@@ -1,4 +1,4 @@
-{# expects: prediction (CyclePrediction or dict-like) #}
+{# expects: prediction (CyclePrediction or dict-like), prediction_evidence (list) #}
 <div class="card" id="predictor-card"
      hx-get="/today/predictor-card"
      hx-trigger="every 60s [document.visibilityState==='visible']"
@@ -27,19 +27,14 @@
       {% else %}低{% endif %}
       {% if prediction.confidence_score is defined %}（{{ (prediction.confidence_score * 100) | round | int }}%）{% endif %}
     </p>
-    {% if prediction.evidence %}
+    {% if prediction_evidence %}
       <details style="margin-top: var(--space-2);">
         <summary class="subtitle" style="cursor:pointer;">预测依据</summary>
         <ul style="font-size:13px; color:var(--color-text-soft); padding-left:var(--space-5); margin-top:var(--space-2);">
-          {% for e in prediction.evidence %}
+          {% for e in prediction_evidence %}
             <li>
-              {% if e.source == "calendar" %}周期记录
-              {% elif e.source == "bbt" %}基础体温
-              {% elif e.source == "lh" %}LH 试纸
-              {% elif e.source == "mucus" %}分泌物
-              {% elif e.source == "health" %}健康指标
-              {% else %}{{ e.source }}{% endif %}
-              {% if e.active %} ✓{% else %} · 暂无有效信号{% endif %}
+              {{ e.source_label }}
+              {% if e.active %} ✓{% else %} · {{ e.status_label }}{% endif %}
               — {{ e.evidence }}
             </li>
           {% endfor %}
