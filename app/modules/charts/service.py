@@ -24,16 +24,13 @@ def build_bbt_series(db: Session, user_id: int) -> dict:
 
 def build_cycle_series(db: Session, user_id: int) -> dict:
     periods = list(reversed(list_periods(db, user_id=user_id)))
-    points = []
-    for index, period in enumerate(periods):
-        next_period = periods[index + 1] if index + 1 < len(periods) else None
-        if next_period is not None:
-            value = (next_period.start_date - period.start_date).days
-        elif period.end_date is not None:
-            value = (period.end_date - period.start_date).days + 1
-        else:
-            continue
-        points.append({"date": period.start_date.isoformat(), "value": value})
+    points = [
+        {
+            "date": period.start_date.isoformat(),
+            "value": (next_period.start_date - period.start_date).days,
+        }
+        for period, next_period in zip(periods, periods[1:], strict=False)
+    ]
     return {"kind": "cycle", "points": points}
 
 

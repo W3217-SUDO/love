@@ -9,6 +9,7 @@
 <section class="card">
   <h2>基础体温</h2>
   <p class="subtitle">BBT 曲线用于观察排卵后的体温变化。</p>
+  {% set chart_series = summaries.bbt %}
   {% include "fragments/line_chart.html" with context %}
   <a class="btn btn-secondary" href="/charts/bbt.json">查看 BBT JSON</a>
 </section>

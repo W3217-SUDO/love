@@ -1,7 +1,6 @@
-{% set series = summaries.bbt if summaries is defined else none %}
-{% if series and series.points %}
+{% if chart_series and chart_series.points %}
   <ol class="chart-list">
-    {% for point in series.points[-7:] %}
+    {% for point in chart_series.points[-7:] %}
       <li>
         <span>{{ point.date }}</span>
         <strong>{{ point.value }}</strong>
