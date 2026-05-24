@@ -5,5 +5,6 @@ from app.modules import (
     daily_log,  # noqa: F401
     diary,  # noqa: F401
     media,  # noqa: F401
+    settings,  # noqa: F401
     trip,  # noqa: F401
 )

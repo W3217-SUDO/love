@@ -1,7 +1,7 @@
 """create user settings
 
 Revision ID: 0009_user_settings
-Revises: 0008_trip_tables
+Revises: 41d8139025db
 Create Date: 2026-05-24 00:00:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "0009_user_settings"
-down_revision: Union[str, Sequence[str], None] = "0008_trip_tables"
+down_revision: Union[str, Sequence[str], None] = "41d8139025db"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -24,7 +24,7 @@ def upgrade() -> None:
         "user_settings",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("theme", sa.String(length=16), nullable=False),
+        sa.Column("theme", sa.String(length=16), server_default="system", nullable=False),
         sa.Column("visibility", sa.JSON(), nullable=False),
         sa.Column("notification_prefs", sa.JSON(), nullable=False),
         sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
