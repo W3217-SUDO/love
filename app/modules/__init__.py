@@ -4,6 +4,7 @@ from app.modules import (
     cycle,  # noqa: F401
     daily_log,  # noqa: F401
     diary,  # noqa: F401
+    health,  # noqa: F401
     media,  # noqa: F401
     settings,  # noqa: F401
     trip,  # noqa: F401

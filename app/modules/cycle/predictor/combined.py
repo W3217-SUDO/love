@@ -1,7 +1,4 @@
-"""Combined predictor: merges signals into a single CyclePrediction.
-
-M1 implements Calendar + BBT + LH. Future: Mucus, RHR/HRV per spec section 7.1.
-"""
+"""Combined predictor: merges signals into a single CyclePrediction."""
 from datetime import date
 
 from sqlalchemy.orm import Session
@@ -14,7 +11,9 @@ from app.modules.cycle.predictor.base import (
 )
 from app.modules.cycle.predictor.bbt import BBTSignal
 from app.modules.cycle.predictor.calendar import CalendarSignal
+from app.modules.cycle.predictor.health import HealthMetricSignal
 from app.modules.cycle.predictor.lh import LHSignal
+from app.modules.cycle.predictor.mucus import MucusSignal
 
 
 def _confidence_level(score: float) -> ConfidenceLevel:
@@ -33,6 +32,8 @@ class CombinedPredictor:
             LHSignal(),         # highest priority -- real-time
             BBTSignal(),        # post-hoc lock
             CalendarSignal(),   # baseline
+            MucusSignal(),      # supportive evidence
+            HealthMetricSignal(),  # weak wearable evidence
         ]
 
     def predict(
@@ -60,7 +61,7 @@ class CombinedPredictor:
                 evidence=results,
             )
 
-        # Merge: priority LH > BBT > Calendar.
+        # Merge: priority LH > BBT > Calendar. Supportive signals stay evidence-only.
         lh = next((r for r in active if r.source == "lh"), None)
         bbt = next((r for r in active if r.source == "bbt"), None)
         cal = next((r for r in active if r.source == "calendar"), None)
