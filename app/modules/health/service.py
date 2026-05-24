@@ -57,6 +57,7 @@ def upsert_metric(
     unit: str,
     source: str = "manual",
     meta_json: dict | None = None,
+    commit: bool = True,
 ) -> HealthMetric:
     """Create or update one metric for a user/date/type/source."""
     metric_type_value = str(metric_type)
@@ -85,6 +86,10 @@ def upsert_metric(
             meta_json=meta_json if meta_json is not None else {},
         )
         db.add(metric)
+
+    if not commit:
+        db.flush()
+        return metric
 
     try:
         db.commit()

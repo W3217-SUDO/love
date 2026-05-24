@@ -5,7 +5,7 @@
       <p class="subtitle" style="margin:4px 0 0;">{{ job.source }}</p>
     </div>
     <span class="pill" aria-label="状态">
-      {% if job.status == "success" %}成功{% elif job.status == "failed" %}失败{% elif job.status == "processing" %}处理中{% else %}等待中{% endif %}
+      {% if job.status == "succeeded" %}成功{% elif job.status == "partial" %}部分成功{% elif job.status == "failed" %}失败{% elif job.status == "running" %}处理中{% else %}等待中{% endif %}
     </span>
   </div>
 

@@ -6,7 +6,12 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from io import StringIO
-from xml.etree import ElementTree
+
+from defusedxml import ElementTree
+
+
+class ImportParseError(ValueError):
+    pass
 
 
 @dataclass(frozen=True)
@@ -86,8 +91,7 @@ def parse_flo_csv(raw: bytes) -> ParsedImport:
     reader = csv.DictReader(StringIO(text))
     required = {"date", "type", "value"}
     if not required.issubset(set(reader.fieldnames or [])):
-        parsed.skipped.append("missing required columns: date,type,value")
-        return parsed
+        raise ImportParseError("missing required columns: date,type,value")
 
     for index, row in enumerate(reader, start=2):
         row_date = _parse_date(row.get("date"))
@@ -114,10 +118,11 @@ def parse_flo_csv(raw: bytes) -> ParsedImport:
 def parse_apple_health_xml(raw: bytes) -> ParsedImport:
     parsed = ParsedImport()
     try:
-        root = ElementTree.fromstring(raw)  # noqa: S314 - defusedxml is not a project dependency.
+        root = ElementTree.fromstring(raw)
     except ElementTree.ParseError as exc:
-        parsed.skipped.append(f"invalid xml: {exc}")
-        return parsed
+        raise ImportParseError(f"invalid xml: {exc}") from exc
+    if root.tag != "HealthData":
+        raise ImportParseError("invalid Apple Health export: missing HealthData root")
 
     sleep_seconds_by_date: dict[date, float] = defaultdict(float)
     for record in root.iter("Record"):

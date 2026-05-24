@@ -1,6 +1,8 @@
 from datetime import date
 
-from app.modules.import_.parsers import parse_apple_health_xml, parse_flo_csv
+import pytest
+
+from app.modules.import_.parsers import ImportParseError, parse_apple_health_xml, parse_flo_csv
 
 
 def test_parse_flo_csv_maps_period_start_and_symptom_tag():
@@ -36,3 +38,13 @@ def test_parse_apple_health_xml_maps_menstrual_flow_to_period_start():
 
     assert len(parsed.periods) == 1
     assert parsed.periods[0].start_date == date(2026, 5, 1)
+
+
+def test_parse_flo_csv_rejects_malformed_headers():
+    with pytest.raises(ImportParseError, match="missing required columns"):
+        parse_flo_csv(b"when,kind,note\n2026-05-01,period,start\n")
+
+
+def test_parse_apple_health_xml_rejects_malformed_xml():
+    with pytest.raises(ImportParseError, match="invalid xml"):
+        parse_apple_health_xml(b"<HealthData><Record></HealthData>")

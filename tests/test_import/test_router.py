@@ -45,7 +45,33 @@ def test_import_upload_creates_successful_job(client, db):
 
     assert response.status_code in (302, 303)
     job = db.query(ImportJob).one()
-    assert job.status == "success"
+    assert job.status == "succeeded"
+
+
+def test_import_upload_rejects_files_above_configured_limit(client, db, monkeypatch, tmp_path):
+    from app import config
+
+    _login_alice(client, db)
+    settings = config.get_settings()
+    monkeypatch.setattr(
+        config,
+        "get_settings",
+        lambda: type(
+            "S",
+            (),
+            {**settings.model_dump(), "upload_dir": tmp_path, "max_import_upload_bytes": 8},
+        )(),
+    )
+
+    response = client.post(
+        "/me/import",
+        data={"source": "flo"},
+        files={"file": ("flo.csv", b"date,type,value\n", "text/csv")},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 413
+    assert db.query(ImportJob).count() == 0
 
 
 def test_import_status_fragment_renders(client, db):
@@ -53,7 +79,7 @@ def test_import_status_fragment_renders(client, db):
     job = ImportJob(
         source="flo",
         filename="flo.csv",
-        status="success",
+        status="succeeded",
         summary_json={"periods": 1},
         created_by_id=user.id,
     )

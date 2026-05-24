@@ -33,6 +33,7 @@ class Settings(BaseSettings):
 
     max_image_upload_bytes: int = 10 * 1024 * 1024
     max_pdf_upload_bytes: int = 20 * 1024 * 1024
+    max_import_upload_bytes: int = 50 * 1024 * 1024
 
     @field_validator("upload_dir", "backup_dir", "log_dir")
     @classmethod

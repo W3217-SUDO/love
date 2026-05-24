@@ -5,15 +5,17 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app import config
 from app.db import get_db
 from app.deps import get_current_user
-from app.errors import NotFound, ValidationFailed
+from app.errors import FileTooLarge, NotFound, ValidationFailed
 from app.modules.auth.models import User
 from app.modules.import_.models import ImportJob
 from app.modules.import_.service import create_import_job, run_import_job
 from app.templating import templates
 
 router = APIRouter(tags=["import"])
+READ_CHUNK_BYTES = 1024 * 1024
 
 
 @router.get("/me/import", response_class=HTMLResponse)
@@ -39,7 +41,8 @@ async def import_upload(
 ) -> RedirectResponse:
     if source not in {"flo", "apple_health"}:
         raise ValidationFailed("unsupported import source")
-    raw = await file.read()
+    max_upload_bytes = config.get_settings().max_import_upload_bytes
+    raw = await _read_upload_with_limit(file, max_upload_bytes=max_upload_bytes)
     if not raw:
         raise ValidationFailed("empty import file")
     filename = file.filename or "upload"
@@ -53,6 +56,17 @@ async def import_upload(
     run_import_job(db, job.id)
     db.commit()
     return RedirectResponse(url="/me/import", status_code=303)
+
+
+async def _read_upload_with_limit(file: UploadFile, *, max_upload_bytes: int) -> bytes:
+    chunks: list[bytes] = []
+    total = 0
+    while chunk := await file.read(READ_CHUNK_BYTES):
+        total += len(chunk)
+        if total > max_upload_bytes:
+            raise FileTooLarge(f"file is {total} bytes; max {max_upload_bytes}")
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 
 @router.get("/me/import/_fragment/status/{job_id}", response_class=HTMLResponse)

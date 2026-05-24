@@ -17,6 +17,7 @@ def test_settings_loads_required_fields(monkeypatch):
     assert s.session_max_age_days == 30  # default
     assert s.max_image_upload_bytes == 10 * 1024 * 1024
     assert s.max_pdf_upload_bytes == 20 * 1024 * 1024
+    assert s.max_import_upload_bytes == 50 * 1024 * 1024
 
 
 def test_settings_loads_upload_size_limits(monkeypatch):
@@ -31,11 +32,13 @@ def test_settings_loads_upload_size_limits(monkeypatch):
     monkeypatch.setenv("LOG_DIR", "/tmp/logs")
     monkeypatch.setenv("MAX_IMAGE_UPLOAD_BYTES", "12345")
     monkeypatch.setenv("MAX_PDF_UPLOAD_BYTES", "67890")
+    monkeypatch.setenv("MAX_IMPORT_UPLOAD_BYTES", "13579")
 
     s = Settings()
 
     assert s.max_image_upload_bytes == 12345
     assert s.max_pdf_upload_bytes == 67890
+    assert s.max_import_upload_bytes == 13579
 
 
 def test_settings_secret_key_min_length(monkeypatch):
