@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block title %}基础体温 · Couple Diary{% endblock %}
 {% block content %}
-<div class="card">
-  <h1>🌡 基础体温（BBT）</h1>
+<section class="card page-header">
+  <h1 class="page-title">基础体温（BBT）</h1>
   <p class="subtitle">每天起床第一件事测，三步法识别排卵需要至少 9 天连续数据。</p>
-</div>
+</section>
 
-<div class="card">
-  <h3>录入</h3>
+<section class="card">
+  <h2>录入</h2>
   <form id="bbt-form" onsubmit="return false;">
     {% include "components/csrf.html" %}
     <div class="form-row">
@@ -16,7 +16,7 @@
     </div>
     <div class="form-row">
       <label class="form-label" for="temp_c">体温（℃）</label>
-      <input class="input" id="temp_c" name="temp_c" type="number" step="0.01" min="34.5" max="39.5" placeholder="例：36.65" required>
+      <input class="input" id="temp_c" name="temp_c" type="number" step="0.01" min="34.5" max="39.5" placeholder="例如：36.65" required>
     </div>
     <div class="form-row">
       <label class="form-label" for="method">测量方法</label>
@@ -30,42 +30,42 @@
     </div>
     <div class="form-row">
       <label class="form-label" for="bbt_notes">备注（可选）</label>
-      <input class="input" id="bbt_notes" name="notes" maxlength="200" placeholder="例：昨晚熬夜了">
+      <input class="input" id="bbt_notes" name="notes" maxlength="200" placeholder="例如：昨晚熬夜了">
     </div>
     <div class="form-error" id="bbt-error" hidden></div>
-    <button class="btn" type="submit" style="width:100%">保存 🌡</button>
+    <button class="btn" type="submit" style="width:100%">保存</button>
   </form>
-</div>
+</section>
 
-<div class="card">
-  <h3>最近记录</h3>
+<section class="card">
+  <h2>最近记录</h2>
   {% if readings %}
     <ul style="list-style:none; padding:0; margin:0;">
       {% for r in readings %}
-        <li style="display:flex; justify-content:space-between; align-items:center; padding: var(--space-2) 0; border-bottom:1px solid var(--color-border);">
+        <li style="display:flex; justify-content:space-between; align-items:center; gap: var(--space-3); padding: var(--space-2) 0; border-bottom:1px solid var(--color-border);">
           <span>
-            <span class="subtitle">{{ r.date.isoformat() }} · {{ r.method or "—" }}</span>
+            <span class="subtitle">{{ r.date.isoformat() }} · {{ r.method or "未填写" }}</span>
             <strong style="margin-left: var(--space-2)">{{ r.temp_c }} ℃</strong>
           </span>
           <form action="/bbt/log/{{ r.id }}/delete" method="post" style="display:inline; margin:0;"
-                onsubmit="return confirm('确认删除这条体温记录？');">
+                data-confirm="确认删除这条体温记录？">
             {% include "components/csrf.html" %}
-            <button type="submit" class="btn-secondary" style="padding:4px 12px; font-size:12px;">删除</button>
+            <button type="submit" class="btn-danger" style="padding:4px 12px; font-size:12px;">删除</button>
           </form>
         </li>
       {% endfor %}
     </ul>
   {% else %}
-    <p class="subtitle">还没有体温记录</p>
+    <p class="empty-state">还没有体温记录</p>
   {% endif %}
-</div>
+</section>
 {% endblock %}
 {% block scripts %}
 <script>
 function friendlyErr(code, message, status) {
   const map = {
     invalid_bbt_reading: "体温读数无效（合理范围 34.5-39.5℃）。",
-    validation_failed: "填写的数据有问题，检查日期和数值。",
+    validation_failed: "填写的数据有问题，请检查日期和数值。",
   };
   return map[code] || message || ("失败 (" + status + ")");
 }

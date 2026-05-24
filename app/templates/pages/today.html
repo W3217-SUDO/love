@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 {% block title %}今天 · Couple Diary{% endblock %}
 {% block content %}
-<div class="card">
-  <h1>今天 · {{ date.isoformat() }}</h1>
+<section class="card page-header">
+  <h1 class="page-title">今天 · {{ date.isoformat() }}</h1>
   <p class="subtitle">{{ greeting }}, {{ user.display_name }}</p>
-</div>
+</section>
 
-<div class="card">
-  <h3>快捷记录</h3>
-  <div style="display:flex; gap: var(--space-2); flex-wrap: wrap;">
-    <a class="btn" href="/log/{{ date.isoformat() }}">➕ 今日标签</a>
-    <a class="btn" href="/cycle/log">🩸 经期</a>
-    <a class="btn" href="/bbt/log">🌡 体温</a>
+<section class="card">
+  <h2>快捷记录</h2>
+  <div class="action-grid">
+    <a class="btn" href="/log/{{ date.isoformat() }}">今天的标签</a>
+    <a class="btn" href="/cycle/log">经期</a>
+    <a class="btn" href="/bbt/log">体温</a>
   </div>
-</div>
+</section>
 
 {% include "fragments/cycle_ring.html" with context %}
 
@@ -21,8 +21,8 @@
 
 {% include "fragments/partner_card.html" with context %}
 
-<div class="card">
-  <h3>今天的标签</h3>
+<section class="card">
+  <h2>今天的标签</h2>
   {% if active_tags %}
     <div style="display:flex; flex-wrap:wrap; gap: var(--space-2); margin-bottom: var(--space-3);">
       {% for tag in active_tags %}
@@ -30,13 +30,13 @@
       {% endfor %}
     </div>
   {% else %}
-    <p class="subtitle">还没有打卡</p>
+    <p class="empty-state">还没有记录标签</p>
   {% endif %}
-  <a class="btn" href="/log/{{ date.isoformat() }}">打开标签 sheet ➕</a>
-</div>
+  <a class="btn-secondary" href="/log/{{ date.isoformat() }}">打开标签记录</a>
+</section>
 
-<div class="card">
-  <h3>📈 基础体温（最近 7 天）</h3>
+<section class="card">
+  <h2>基础体温</h2>
   {% if recent_bbt %}
     <ul style="list-style:none; padding:0; margin:0;">
       {% for r in recent_bbt %}
@@ -47,7 +47,7 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p class="subtitle">还没有记录基础体温 — <a href="/bbt/log">去录入</a></p>
+    <p class="empty-state">还没有记录基础体温，<a href="/bbt/log">去录入</a></p>
   {% endif %}
-</div>
+</section>
 {% endblock %}

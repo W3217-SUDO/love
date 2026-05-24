@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% block title %}日历 · Couple Diary{% endblock %}
 {% block content %}
-<div class="card">
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-    <a class="btn-secondary" href="/calendar/{{ prev_year }}/{{ '%02d' % prev_month }}">‹</a>
-    <h1 style="margin:0">{{ year }}-{{ '%02d' % month }}</h1>
-    <a class="btn-secondary" href="/calendar/{{ next_year }}/{{ '%02d' % next_month }}">›</a>
+<section class="card page-header">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap: var(--space-3);">
+    <a class="btn-secondary" href="/calendar/{{ prev_year }}/{{ '%02d' % prev_month }}" aria-label="上个月">‹</a>
+    <h1 class="page-title" style="margin:0">日历 · {{ year }}-{{ '%02d' % month }}</h1>
+    <a class="btn-secondary" href="/calendar/{{ next_year }}/{{ '%02d' % next_month }}" aria-label="下个月">›</a>
   </div>
-</div>
+</section>
 
-<div class="card">
+<section class="card">
   <table style="width:100%; border-collapse:collapse; text-align:center;">
     <thead>
       <tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>
@@ -33,7 +33,7 @@
   <div style="margin-top: var(--space-4); font-size:13px; color:var(--color-text-soft); display:flex; gap:var(--space-4); flex-wrap:wrap;">
     <span><span style="display:inline-block; width:12px; height:12px; background:var(--color-accent); border-radius:50%; vertical-align:middle;"></span> 经期</span>
     <span><span style="display:inline-block; width:12px; height:12px; background:var(--color-accent-soft); border-radius:50%; vertical-align:middle;"></span> 预测经期</span>
-    <span><span style="display:inline-block; width:12px; height:12px; border:2px dashed var(--color-accent); border-radius:50%; vertical-align:middle;"></span> 排卵期</span>
+    <span><span style="display:inline-block; width:12px; height:12px; border:2px dashed var(--color-accent); border-radius:50%; vertical-align:middle;"></span> 易孕期</span>
   </div>
-</div>
+</section>
 {% endblock %}

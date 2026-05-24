@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}今天的标签 · Couple Diary{% endblock %}
+{% block title %}今天的记录 · Couple Diary{% endblock %}
 {% block content %}
-<div class="card">
-  <h1>今天的标签</h1>
-  <p class="subtitle">{{ date.isoformat() }} · 点击标签即时保存</p>
-</div>
+<section class="card page-header">
+  <h1 class="page-title">今天的记录</h1>
+  <p class="subtitle">{{ date.isoformat() }} · 点击标签会自动保存</p>
+</section>
 
 {% for category in categories %}
-  <div class="card">
+  <section class="card">
     <h2>{{ category.label }}</h2>
     <div style="display:flex; flex-wrap:wrap; gap: var(--space-2);">
       {% for tag in tags_by_category[category.key] %}
@@ -15,6 +15,6 @@
         {% include 'fragments/tag_pill.html' with context %}
       {% endfor %}
     </div>
-  </div>
+  </section>
 {% endfor %}
 {% endblock %}

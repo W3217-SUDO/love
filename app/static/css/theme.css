@@ -84,6 +84,37 @@ a:hover { text-decoration: underline; }
   margin-bottom: var(--space-4);
 }
 
+.page-header {
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-6);
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.empty-state,
+.save-state {
+  color: var(--color-text-soft);
+  font-size: 14px;
+}
+
+.save-state {
+  margin-top: var(--space-2);
+}
+
+.danger {
+  color: var(--color-error);
+}
+
 /* Pills (Flo-style tag) */
 .pill {
   display: inline-flex;
@@ -122,6 +153,25 @@ a:hover { text-decoration: underline; }
 .btn:hover { background: var(--color-accent-strong); }
 .btn:disabled { background: #ddd; cursor: not-allowed; }
 .btn-secondary { background: var(--color-surface); color: var(--color-accent-strong); border: 1px solid var(--color-border); }
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  background: #ffe2e6;
+  color: var(--color-error);
+  font-weight: 600;
+  border: 1px solid #ffc3ce;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-danger:hover {
+  background: var(--color-error);
+  color: white;
+}
 
 /* Form inputs */
 .input {
@@ -201,5 +251,11 @@ a:hover { text-decoration: underline; }
     width: 480px;
     max-width: 90vw;
     border-radius: var(--radius-lg);
+  }
+}
+
+@media (max-width: 520px) {
+  .action-grid {
+    grid-template-columns: 1fr;
   }
 }
