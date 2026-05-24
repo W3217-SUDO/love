@@ -20,6 +20,7 @@ from app.config import get_settings
 from app.db import SessionLocal
 from app.modules.import_.service import process_pending_import_jobs
 from app.modules.media.models import Media
+from app.modules.notifications.service import process_due_reminders
 
 log = logging.getLogger(__name__)
 
@@ -132,6 +133,18 @@ def job_process_pending_imports() -> None:
         log.exception("process_pending_imports crashed")
 
 
+def job_process_due_reminders() -> None:
+    """Process web-push reminders without taking down other scheduler jobs."""
+    try:
+        with SessionLocal() as db:
+            processed = process_due_reminders(db)
+            if processed:
+                db.commit()
+        log.info("process_due_reminders: processed %d reminders", processed)
+    except Exception:
+        log.exception("process_due_reminders crashed")
+
+
 def _prune_old_files(d: Path, *, days: int) -> None:
     cutoff = datetime.utcnow().timestamp() - days * 86400
     for p in d.iterdir():
@@ -158,6 +171,12 @@ def start_scheduler() -> None:
         "interval",
         minutes=10,
         id="process_pending_imports",
+    )
+    _scheduler.add_job(
+        job_process_due_reminders,
+        "interval",
+        minutes=5,
+        id="process_due_reminders",
     )
     _scheduler.start()
     log.info("scheduler started with %d jobs", len(_scheduler.get_jobs()))

@@ -23,6 +23,7 @@ from app.modules.daily_log.router import router as daily_log_router
 from app.modules.diary.router import router as diary_router
 from app.modules.import_.router import router as import_router
 from app.modules.media.router import router as media_router
+from app.modules.notifications.router import router as notifications_router
 from app.modules.reports.router import router as reports_router
 from app.modules.settings.router import router as settings_router
 from app.modules.timeline.router import router as timeline_router
@@ -102,6 +103,7 @@ app.include_router(daily_log_router)
 app.include_router(diary_router)
 app.include_router(import_router)
 app.include_router(media_router)
+app.include_router(notifications_router)
 app.include_router(reports_router)
 app.include_router(settings_router)
 app.include_router(timeline_router)

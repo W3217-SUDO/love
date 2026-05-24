@@ -25,4 +25,68 @@
       event.preventDefault();
     }
   });
+
+  function base64UrlToUint8Array(value) {
+    const padding = '='.repeat((4 - (value.length % 4)) % 4);
+    const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = window.atob(base64);
+    const output = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i += 1) {
+      output[i] = raw.charCodeAt(i);
+    }
+    return output;
+  }
+
+  async function enablePushNotifications(statusEl) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      if (statusEl) statusEl.textContent = '当前浏览器不支持推送提醒';
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      if (statusEl) statusEl.textContent = '未开启通知权限';
+      return;
+    }
+
+    const keyResponse = await fetch('/notifications/vapid-public-key');
+    const keyData = await keyResponse.json();
+    if (!keyData.publicKey) {
+      if (statusEl) statusEl.textContent = '推送服务尚未配置';
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: base64UrlToUint8Array(keyData.publicKey),
+    });
+
+    const response = await fetch('/notifications/subscriptions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(subscription),
+    });
+
+    if (!response.ok) {
+      throw new Error('subscription save failed');
+    }
+    if (statusEl) statusEl.textContent = '推送提醒已开启';
+  }
+
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-enable-push]');
+    if (!button) return;
+    const statusEl = document.querySelector('[data-push-status]');
+    button.disabled = true;
+    if (statusEl) statusEl.textContent = '正在开启推送提醒...';
+    enablePushNotifications(statusEl)
+      .catch((err) => {
+        console.error('push subscription failed', err);
+        if (statusEl) statusEl.textContent = '开启失败，请稍后再试';
+      })
+      .finally(() => {
+        button.disabled = false;
+      });
+  });
 })();

@@ -12,3 +12,13 @@ def test_service_worker_served_at_root_scope(client):
     # M1 SW: very minimal — at least handle 'install' and 'fetch' events
     assert "install" in body
     assert "fetch" in body
+
+
+def test_service_worker_handles_push_notifications(client):
+    r = client.get("/sw.js")
+
+    assert r.status_code == 200
+    body = r.text
+    assert "push" in body
+    assert "showNotification" in body
+    assert "notificationclick" in body
