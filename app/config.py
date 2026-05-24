@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     vapid_private_key: str | None = None
     vapid_subject: str | None = None
 
+    max_image_upload_bytes: int = 10 * 1024 * 1024
+    max_pdf_upload_bytes: int = 20 * 1024 * 1024
+
     @field_validator("upload_dir", "backup_dir", "log_dir")
     @classmethod
     def must_be_absolute(cls, v: Path) -> Path:

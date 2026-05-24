@@ -1,3 +1,6 @@
+import io
+
+from PIL import Image
 from sqlalchemy import delete
 
 from app.modules.auth.invite import create_couple_and_invites, redeem_invite
@@ -19,6 +22,13 @@ def _login(client, db, password="strongpassword"):
     client.post("/login", json={"username": "alice", "password": password})
 
 
+def _png_bytes(size=(10, 10)) -> bytes:
+    img = Image.new("RGB", size, (0, 128, 255))
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
 def test_upload_pdf_returns_pdf_kind(client, db, tmp_path, monkeypatch):
     from app.config import get_settings
 
@@ -36,6 +46,47 @@ def test_upload_pdf_returns_pdf_kind(client, db, tmp_path, monkeypatch):
 
     assert r.status_code == 200, r.text
     assert r.json()["kind"] == "pdf"
+
+
+def test_pdf_upload_uses_pdf_specific_size_limit(client, db, tmp_path, monkeypatch):
+    from app.config import get_settings
+
+    base = get_settings().model_dump()
+    monkeypatch.setattr(
+        "app.config.get_settings",
+        lambda: type(
+            "S",
+            (),
+            {
+                **base,
+                "upload_dir": tmp_path,
+                "max_image_upload_bytes": 10 * 1024,
+                "max_pdf_upload_bytes": 16,
+            },
+        )(),
+    )
+    _login(client, db)
+
+    pdf_response = client.post(
+        "/media/upload",
+        files={
+            "file": (
+                "report.pdf",
+                b"%PDF-1.4\n" + (b"x" * 32) + b"\n%%EOF\n",
+                "application/pdf",
+            ),
+        },
+    )
+    image_response = client.post(
+        "/media/upload",
+        files={"file": ("photo.png", _png_bytes(), "image/png")},
+    )
+
+    assert pdf_response.status_code == 413
+    assert pdf_response.json()["error"]["code"] == "file_too_large"
+    assert "max 16" in pdf_response.json()["error"]["message"]
+    assert image_response.status_code == 200, image_response.text
+    assert image_response.json()["kind"] == "image"
 
 
 def test_pdf_dedup_does_not_satisfy_image_upload(client, db, tmp_path, monkeypatch):

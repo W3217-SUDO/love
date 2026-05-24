@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app import config
 from app.modules.media.models import Media
 
-MAX_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
+MAX_SIZE_BYTES = 50 * 1024 * 1024  # Legacy fallback for older settings doubles.
 ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp", "application/pdf"}
 IMAGE_FORMAT_BY_MIME = {
     "image/jpeg": "JPEG",
@@ -40,6 +40,12 @@ class FileTooLargeError(PipelineError):
 def _validate_pdf(payload: bytes) -> None:
     if not payload.startswith(PDF_MAGIC):
         raise PipelineError("not a valid PDF")
+
+
+def _upload_limit_bytes(settings: object, *, requested_kind: str) -> int:
+    if requested_kind == "pdf":
+        return int(getattr(settings, "max_pdf_upload_bytes", MAX_SIZE_BYTES))
+    return int(getattr(settings, "max_image_upload_bytes", MAX_SIZE_BYTES))
 
 
 def _open_verified_image(*, mime: str, payload: bytes) -> Image.Image:
@@ -87,14 +93,17 @@ def process_upload(
     payload: bytes,
 ) -> Media:
     """Validate, store, derive. Returns a (possibly pre-existing) Media row."""
-    if len(payload) > MAX_SIZE_BYTES:
-        raise FileTooLargeError(
-            f"file is {len(payload)} bytes; max {MAX_SIZE_BYTES}",
-        )
     if mime not in ALLOWED_MIME:
         raise UnsupportedMimeError(f"mime {mime!r} not allowed")
 
     requested_kind = "pdf" if mime == "application/pdf" else "image"
+    settings = config.get_settings()
+    max_upload_bytes = _upload_limit_bytes(settings, requested_kind=requested_kind)
+    if len(payload) > max_upload_bytes:
+        raise FileTooLargeError(
+            f"file is {len(payload)} bytes; max {max_upload_bytes}",
+        )
+
     if requested_kind == "pdf":
         _validate_pdf(payload)
         img = None
@@ -114,7 +123,6 @@ def process_upload(
             raise PipelineError("content already exists with a different media type")
         return existing
 
-    settings = config.get_settings()
     upload_dir = Path(settings.upload_dir)
     now = datetime.now()
     rel_dir = (
