@@ -74,8 +74,41 @@
     if (statusEl) statusEl.textContent = '推送提醒已开启';
   }
 
+  async function disablePushNotifications(statusEl) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      if (statusEl) statusEl.textContent = '当前浏览器不支持推送提醒';
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.getRegistration();
+    const subscription = await registration?.pushManager.getSubscription();
+    if (!subscription) {
+      if (statusEl) statusEl.textContent = '当前没有已开启的推送提醒';
+      return;
+    }
+
+    const response = await fetch('/notifications/subscriptions/disable', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: subscription.endpoint }),
+    });
+
+    if (!response.ok) {
+      throw new Error('subscription disable failed');
+    }
+
+    await subscription.unsubscribe();
+    if (statusEl) statusEl.textContent = '推送提醒已关闭';
+  }
+
+  function closestButton(event, selector) {
+    if (!(event.target instanceof Element)) return null;
+    const button = event.target.closest(selector);
+    return button instanceof HTMLButtonElement ? button : null;
+  }
+
   document.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-enable-push]');
+    const button = closestButton(event, '[data-enable-push]');
     if (!button) return;
     const statusEl = document.querySelector('[data-push-status]');
     button.disabled = true;
@@ -84,6 +117,22 @@
       .catch((err) => {
         console.error('push subscription failed', err);
         if (statusEl) statusEl.textContent = '开启失败，请稍后再试';
+      })
+      .finally(() => {
+        button.disabled = false;
+      });
+  });
+
+  document.addEventListener('click', (event) => {
+    const button = closestButton(event, '[data-disable-push]');
+    if (!button) return;
+    const statusEl = document.querySelector('[data-push-status]');
+    button.disabled = true;
+    if (statusEl) statusEl.textContent = '正在关闭推送提醒...';
+    disablePushNotifications(statusEl)
+      .catch((err) => {
+        console.error('push disable failed', err);
+        if (statusEl) statusEl.textContent = '关闭失败，请稍后再试';
       })
       .finally(() => {
         button.disabled = false;

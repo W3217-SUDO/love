@@ -14,7 +14,7 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 
 @router.get("/vapid-public-key")
-def vapid_public_key() -> dict[str, str]:
+def vapid_public_key(_user: User = Depends(get_current_user)) -> dict[str, str]:
     return {"publicKey": get_settings_for_router().vapid_public_key or ""}
 
 
@@ -53,4 +53,3 @@ async def disable_current_subscription(
     disable_subscription(db, user_id=user.id, endpoint=str(endpoint))
     db.commit()
     return {"status": "ok"}
-

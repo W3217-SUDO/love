@@ -41,6 +41,7 @@
   <div style="display:grid; gap: var(--space-3); margin-bottom: var(--space-4);">
     <p class="subtitle" data-push-status>推送提醒可用于每日记录、经期和伴侣动态提醒。</p>
     <button class="btn-primary" type="button" data-enable-push>开启浏览器推送提醒</button>
+    <button class="btn-secondary" type="button" data-disable-push>关闭浏览器推送提醒</button>
   </div>
   <ul>
     <li>每日记录：{{ "开启" if settings.notification_prefs.daily_record.enabled else "关闭" }}</li>
