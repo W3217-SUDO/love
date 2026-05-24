@@ -65,6 +65,7 @@ class CombinedPredictor:
         lh = next((r for r in active if r.source == "lh"), None)
         bbt = next((r for r in active if r.source == "bbt"), None)
         cal = next((r for r in active if r.source == "calendar"), None)
+        core = lh or bbt or cal
 
         next_period = cal.predicted_next_period if cal else None
         ovulation = (
@@ -79,7 +80,7 @@ class CombinedPredictor:
                   else (cal.phase if cal else "unknown"))
         )
 
-        confidence_score = max(r.confidence for r in active)
+        confidence_score = core.confidence if core is not None else 0.0
         return CyclePrediction(
             target_date=target_date,
             next_period=next_period,

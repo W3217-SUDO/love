@@ -4,6 +4,7 @@ from decimal import Decimal
 from app.modules.auth.models import User
 from app.modules.cycle.predictor.combined import CombinedPredictor
 from app.modules.cycle.service import log_bbt, log_period_end, log_period_start
+from app.modules.daily_log.service import toggle_tag
 
 
 def _user(db, name="alice"):
@@ -36,6 +37,34 @@ def test_combined_uses_calendar_when_only_calendar(db):
     assert pred.ovulation == date(2026, 5, 13)
     assert pred.phase == "fertile"
     assert any(e.source == "calendar" for e in pred.evidence)
+
+
+def test_combined_mucus_only_stays_unknown_low_confidence(db):
+    u = _user(db)
+    toggle_tag(db, user_id=u.id, date=date(2026, 5, 24), tag_key="disch_egg_white")
+    db.flush()
+
+    pred = CombinedPredictor().predict(db, user_id=u.id, target_date=date(2026, 5, 24))
+
+    assert pred.phase == "unknown"
+    assert pred.ovulation is None
+    assert pred.confidence_score == 0.0
+    assert pred.confidence_level == "low"
+    mucus_evidence = [e for e in pred.evidence if e.source == "mucus"]
+    assert mucus_evidence and mucus_evidence[0].active is True
+
+
+def test_combined_calendar_confidence_not_upgraded_by_mucus(db):
+    u = _user(db)
+    _seed_cycles(db, u.id, [date(2026, 4, 1)], length=5)
+    toggle_tag(db, user_id=u.id, date=date(2026, 4, 10), tag_key="disch_egg_white")
+    db.flush()
+
+    pred = CombinedPredictor().predict(db, user_id=u.id, target_date=date(2026, 4, 10))
+
+    assert pred.phase == "fertile"
+    assert pred.confidence_score == 0.20
+    assert pred.confidence_level == "low"
 
 
 def test_combined_bbt_overrides_ovulation_when_active(db):

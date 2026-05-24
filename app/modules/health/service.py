@@ -3,6 +3,7 @@ from decimal import Decimal
 from enum import StrEnum
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.modules.health.models import HealthMetric
@@ -14,6 +15,36 @@ class MetricType(StrEnum):
     SLEEP_DURATION = "sleep_duration"
     SLEEP_QUALITY = "sleep_quality"
     WEIGHT = "weight"
+
+
+def _find_metric(
+    db: Session,
+    *,
+    user_id: int,
+    date: date_t,
+    metric_type: str,
+    source: str,
+) -> HealthMetric | None:
+    return db.execute(
+        select(HealthMetric).where(
+            HealthMetric.user_id == user_id,
+            HealthMetric.date == date,
+            HealthMetric.metric_type == metric_type,
+            HealthMetric.source == source,
+        ),
+    ).scalar_one_or_none()
+
+
+def _update_metric(
+    metric: HealthMetric,
+    *,
+    value: Decimal,
+    unit: str,
+    meta_json: dict | None,
+) -> None:
+    metric.value = value
+    metric.unit = unit
+    metric.meta_json = meta_json if meta_json is not None else {}
 
 
 def upsert_metric(
@@ -32,19 +63,16 @@ def upsert_metric(
     if not isinstance(value, Decimal):
         value = Decimal(str(value))
 
-    existing = db.execute(
-        select(HealthMetric).where(
-            HealthMetric.user_id == user_id,
-            HealthMetric.date == date,
-            HealthMetric.metric_type == metric_type_value,
-            HealthMetric.source == source,
-        ),
-    ).scalar_one_or_none()
+    existing = _find_metric(
+        db,
+        user_id=user_id,
+        date=date,
+        metric_type=metric_type_value,
+        source=source,
+    )
 
     if existing is not None:
-        existing.value = value
-        existing.unit = unit
-        existing.meta_json = meta_json if meta_json is not None else {}
+        _update_metric(existing, value=value, unit=unit, meta_json=meta_json)
         metric = existing
     else:
         metric = HealthMetric(
@@ -58,7 +86,22 @@ def upsert_metric(
         )
         db.add(metric)
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        metric = _find_metric(
+            db,
+            user_id=user_id,
+            date=date,
+            metric_type=metric_type_value,
+            source=source,
+        )
+        if metric is None:
+            raise
+        _update_metric(metric, value=value, unit=unit, meta_json=meta_json)
+        db.commit()
+
     db.refresh(metric)
     return metric
 

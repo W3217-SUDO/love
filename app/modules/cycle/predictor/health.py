@@ -5,24 +5,29 @@ prediction, but are intentionally weak evidence compared with LH/BBT.
 """
 from datetime import date
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.modules.cycle.predictor.base import SignalResult
-from app.modules.health.service import MetricType, list_metrics
+from app.modules.health.models import HealthMetric
+from app.modules.health.service import MetricType
 
 
 class HealthMetricSignal:
     source = "health"
 
     def evaluate(self, db: Session, *, user_id: int, target_date: date) -> SignalResult:
-        rows = list_metrics(
-            db,
-            user_id=user_id,
-            metric_type=MetricType.RESTING_HEART_RATE,
-            start=target_date,
-            end=target_date,
-        )
-        if not rows:
+        metric = db.execute(
+            select(HealthMetric)
+            .where(
+                HealthMetric.user_id == user_id,
+                HealthMetric.metric_type == MetricType.RESTING_HEART_RATE,
+                HealthMetric.date == target_date,
+            )
+            .order_by(HealthMetric.updated_at.desc(), HealthMetric.id.desc())
+            .limit(1),
+        ).scalar_one_or_none()
+        if metric is None:
             return SignalResult(
                 source=self.source,
                 active=False,
@@ -30,7 +35,6 @@ class HealthMetricSignal:
                 evidence="no resting heart rate logged today",
             )
 
-        metric = rows[-1]
         return SignalResult(
             source=self.source,
             active=True,
