@@ -102,6 +102,60 @@ def test_update_report_with_blank_media_id_clears_attachment(client, db):
     assert report.media_id is None
 
 
+def test_update_report_omitted_fields_preserve_existing_values(client, db):
+    alice = _login_alice(client, db)
+    media = _media(db, alice.id)
+    report = Report(
+        owner_id=alice.id,
+        date=date(2026, 5, 24),
+        title="骞村害浣撴",
+        report_type="checkup",
+        notes="keep notes",
+        visibility="shared",
+        media_id=media.id,
+    )
+    db.add(report)
+    db.flush()
+
+    r = client.post(
+        f"/reports/{report.id}",
+        data={"notes": "updated notes"},
+        follow_redirects=False,
+    )
+
+    assert r.status_code in (302, 303, 307)
+    db.refresh(report)
+    assert report.date == date(2026, 5, 24)
+    assert report.title == "骞村害浣撴"
+    assert report.report_type == "checkup"
+    assert report.notes == "updated notes"
+    assert report.visibility == "shared"
+    assert report.media_id == media.id
+
+
+def test_update_report_blank_title_is_invalid(client, db):
+    alice = _login_alice(client, db)
+    report = Report(
+        owner_id=alice.id,
+        date=date(2026, 5, 24),
+        title="骞村害浣撴",
+        report_type="checkup",
+        visibility="private",
+    )
+    db.add(report)
+    db.flush()
+
+    r = client.post(
+        f"/reports/{report.id}",
+        data={"title": ""},
+        follow_redirects=False,
+    )
+
+    assert r.status_code == 422
+    db.refresh(report)
+    assert report.title == "骞村害浣撴"
+
+
 def test_report_detail_renders_title(client, db):
     alice = _login_alice(client, db)
     report = Report(

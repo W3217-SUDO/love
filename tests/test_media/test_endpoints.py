@@ -62,7 +62,7 @@ def test_serve_with_cookie_auth(client, db, tmp_path, monkeypatch):
     media_id = r.json()["id"]
     r2 = client.get(f"/media/{media_id}")
     assert r2.status_code == 200
-    assert r2.headers["content-type"].startswith("image/")
+    assert r2.headers["content-type"] == "image/webp"
 
 
 def test_serve_with_signed_url_no_cookie(client, db, tmp_path, monkeypatch):

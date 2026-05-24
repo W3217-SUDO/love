@@ -166,17 +166,25 @@ async def report_update(
     user: User = Depends(get_current_user),
 ):
     form = await request.form()
+    updates = {}
+    if "date" in form:
+        updates["date"] = _parse_date(_form_str(form.get("date")))
+    if "title" in form:
+        updates["title"] = _form_str(form.get("title"), "") or ""
+    if "report_type" in form:
+        updates["report_type"] = _form_str(form.get("report_type")) or "general"
+    if "notes" in form:
+        updates["notes"] = _form_str(form.get("notes")) or ""
+    if "visibility" in form:
+        updates["visibility"] = _form_str(form.get("visibility")) or "private"
+    if "media_id" in form:
+        updates["media_id"] = _parse_media_id(_form_str(form.get("media_id")))
     try:
         report = update_report(
             db,
             report_id=report_id,
             user=user,
-            date=_parse_date(_form_str(form.get("date"))),
-            title=_form_str(form.get("title")) or None,
-            report_type=_form_str(form.get("report_type")) or "general",
-            notes=_form_str(form.get("notes")) or "",
-            visibility=_form_str(form.get("visibility")) or "private",
-            media_id=_parse_media_id(_form_str(form.get("media_id"))),
+            **updates,
         )
         db.commit()
     except ReportNotFound as exc:

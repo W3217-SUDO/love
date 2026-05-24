@@ -110,7 +110,10 @@ def _serve_file(
     path = paths[which]
     if not path or not Path(path).is_file():
         raise NotFound("file missing on disk")
-    media_type = media.mime if which == "original" else "image/webp"
+    if which == "original":
+        media_type = "application/pdf" if media.kind == "pdf" else "image/webp"
+    else:
+        media_type = "image/webp"
     return FileResponse(
         path,
         media_type=media_type,
