@@ -24,9 +24,9 @@ class Report(Base):
     )
     date: Mapped[date_t] = mapped_column(Date, nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(120), nullable=False)
-    report_type: Mapped[str | None] = mapped_column(
+    report_type: Mapped[str] = mapped_column(
         String(64),
-        nullable=True,
+        nullable=False,
         default="general",
         server_default="general",
     )

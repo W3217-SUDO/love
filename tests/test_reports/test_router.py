@@ -70,6 +70,38 @@ def test_create_report_using_existing_media_id(client, db):
     assert "/reports/" in r.headers["location"]
 
 
+def test_update_report_with_blank_media_id_clears_attachment(client, db):
+    alice = _login_alice(client, db)
+    media = _media(db, alice.id)
+    report = Report(
+        owner_id=alice.id,
+        date=date(2026, 5, 24),
+        title="年度体检",
+        report_type="checkup",
+        visibility="private",
+        media_id=media.id,
+    )
+    db.add(report)
+    db.flush()
+
+    r = client.post(
+        f"/reports/{report.id}",
+        data={
+            "date": "2026-05-24",
+            "title": "年度体检",
+            "report_type": "checkup",
+            "notes": "",
+            "visibility": "private",
+            "media_id": "",
+        },
+        follow_redirects=False,
+    )
+
+    assert r.status_code in (302, 303, 307)
+    db.refresh(report)
+    assert report.media_id is None
+
+
 def test_report_detail_renders_title(client, db):
     alice = _login_alice(client, db)
     report = Report(

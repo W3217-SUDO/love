@@ -15,6 +15,11 @@ from app.modules.media.models import Media
 
 MAX_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
 ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp", "application/pdf"}
+IMAGE_FORMAT_BY_MIME = {
+    "image/jpeg": "JPEG",
+    "image/png": "PNG",
+    "image/webp": "WEBP",
+}
 PDF_MAGIC = b"%PDF-"
 THUMB_MAX = (400, 400)
 PREVIEW_MAX_LONG_EDGE = 1200
@@ -30,6 +35,27 @@ class UnsupportedMimeError(PipelineError):
 
 class FileTooLargeError(PipelineError):
     pass
+
+
+def _validate_pdf(payload: bytes) -> None:
+    if not payload.startswith(PDF_MAGIC):
+        raise PipelineError("not a valid PDF")
+
+
+def _open_verified_image(*, mime: str, payload: bytes) -> Image.Image:
+    try:
+        probe = Image.open(io.BytesIO(payload))
+        if probe.format != IMAGE_FORMAT_BY_MIME[mime]:
+            raise PipelineError(f"not a valid {mime} file")
+        probe.verify()  # raises on non-image / corrupt image
+    except PipelineError:
+        raise
+    except UnidentifiedImageError as exc:
+        raise PipelineError(f"not a valid image: {exc}") from exc
+    except Exception as exc:  # Pillow raises a variety of exceptions
+        raise PipelineError(f"not a valid image: {exc}") from exc
+
+    return Image.open(io.BytesIO(payload))
 
 
 def _exif_taken_at(img: Image.Image) -> datetime | None:
@@ -68,6 +94,13 @@ def process_upload(
     if mime not in ALLOWED_MIME:
         raise UnsupportedMimeError(f"mime {mime!r} not allowed")
 
+    requested_kind = "pdf" if mime == "application/pdf" else "image"
+    if requested_kind == "pdf":
+        _validate_pdf(payload)
+        img = None
+    else:
+        img = _open_verified_image(mime=mime, payload=payload)
+
     sha = hashlib.sha256(payload).hexdigest()
 
     # Dedup by (owner_id, sha256)
@@ -77,6 +110,8 @@ def process_upload(
         ),
     ).scalar_one_or_none()
     if existing is not None:
+        if existing.kind != requested_kind or existing.mime != mime:
+            raise PipelineError("content already exists with a different media type")
         return existing
 
     settings = config.get_settings()
@@ -88,9 +123,7 @@ def process_upload(
     abs_dir = upload_dir / rel_dir
     abs_dir.mkdir(parents=True, exist_ok=True)
 
-    if mime == "application/pdf":
-        if not payload.startswith(PDF_MAGIC):
-            raise PipelineError("not a valid PDF")
+    if requested_kind == "pdf":
         original_path = abs_dir / f"{sha}.pdf"
         original_path.write_bytes(payload)
         row = Media(
@@ -102,18 +135,6 @@ def process_upload(
         db.add(row)
         db.flush()
         return row
-
-    # Magic-byte validation: try to open as image and verify.
-    try:
-        probe = Image.open(io.BytesIO(payload))
-        probe.verify()  # raises on non-image / corrupt image
-    except UnidentifiedImageError as exc:
-        raise PipelineError(f"not a valid image: {exc}") from exc
-    except Exception as exc:  # Pillow raises a variety of exceptions
-        raise PipelineError(f"not a valid image: {exc}") from exc
-
-    # Re-open since verify() leaves the file pointer at EOF
-    img = Image.open(io.BytesIO(payload))
 
     # Save original as WebP (strips EXIF naturally)
     original_path = abs_dir / f"{sha}.webp"

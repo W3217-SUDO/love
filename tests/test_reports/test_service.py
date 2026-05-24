@@ -88,6 +88,23 @@ def test_update_report_owner_only(db):
         update_report(db, report_id=report.id, user=bob, title="nope")
 
 
+def test_update_report_can_clear_media(db):
+    alice, _ = _seed(db)
+    media = _media(db, alice.id)
+    report = create_report(
+        db,
+        owner_id=alice.id,
+        date=date(2026, 5, 24),
+        title="with media",
+        media_id=media.id,
+    )
+    db.flush()
+
+    updated = update_report(db, report_id=report.id, user=alice, media_id=None)
+
+    assert updated.media_id is None
+
+
 def test_delete_report_owner_only(db):
     alice, bob = _seed(db)
     report = create_report(

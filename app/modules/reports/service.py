@@ -8,6 +8,8 @@ from app.modules.auth.models import Couple, User
 from app.modules.media.models import Media
 from app.modules.reports.models import Report
 
+_UNSET = object()
+
 
 class ReportError(Exception):
     pass
@@ -103,7 +105,7 @@ def update_report(
     report_type: str | None = None,
     notes: str | None = None,
     visibility: str | None = None,
-    media_id: int | None = None,
+    media_id: int | None | object = _UNSET,
 ) -> Report:
     report = db.execute(
         select(Report).where(Report.id == report_id),
@@ -124,7 +126,7 @@ def update_report(
         report.notes = notes
     if visibility is not None:
         report.visibility = _validate_visibility(visibility)
-    if media_id is not None:
+    if media_id is not _UNSET:
         report.media_id = _validate_media(db, media_id=media_id, owner_id=user.id)
     return report
 

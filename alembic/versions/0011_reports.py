@@ -26,7 +26,7 @@ def upgrade() -> None:
         sa.Column("owner_id", sa.Integer(), nullable=False),
         sa.Column("date", sa.Date(), nullable=False),
         sa.Column("title", sa.String(length=120), nullable=False),
-        sa.Column("report_type", sa.String(length=64), server_default="general", nullable=True),
+        sa.Column("report_type", sa.String(length=64), server_default="general", nullable=False),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("visibility", sa.String(length=16), server_default="private", nullable=False),
         sa.Column("media_id", sa.Integer(), nullable=True),
