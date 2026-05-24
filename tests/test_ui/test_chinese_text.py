@@ -20,11 +20,9 @@ def _login(client, db):
 
 
 def test_catalog_uses_readable_chinese_labels():
-    labels_by_key = {category.key: category.label for category in CATEGORIES}
+    category_labels = [category.label for category in CATEGORIES]
 
-    assert labels_by_key["mood"] == "心情"
-    assert labels_by_key["symptoms"] == "症状"
-    assert labels_by_key["ovulation"] == "排卵测试"
+    assert category_labels == ["亲密与性欲", "心情", "症状", "分泌物", "消化", "排卵测试", "生活"]
     assert TAG_BY_KEY["mood_happy"].label == "开心"
     assert TAG_BY_KEY["ovu_positive"].label == "阳性"
 
