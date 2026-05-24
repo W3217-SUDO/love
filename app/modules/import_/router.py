@@ -10,7 +10,7 @@ from app.deps import get_current_user
 from app.errors import NotFound, ValidationFailed
 from app.modules.auth.models import User
 from app.modules.import_.models import ImportJob
-from app.modules.import_.service import create_import_job
+from app.modules.import_.service import create_import_job, run_import_job
 from app.templating import templates
 
 router = APIRouter(tags=["import"])
@@ -43,13 +43,14 @@ async def import_upload(
     if not raw:
         raise ValidationFailed("empty import file")
     filename = file.filename or "upload"
-    create_import_job(
+    job = create_import_job(
         db,
         user_id=user.id,
         source=source,
         filename=filename,
         raw_bytes=raw,
     )
+    run_import_job(db, job.id)
     db.commit()
     return RedirectResponse(url="/me/import", status_code=303)
 

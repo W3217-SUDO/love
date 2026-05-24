@@ -1,21 +1,21 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from decimal import Decimal
+from pathlib import Path
+from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app import config
 from app.modules.cycle.models import Period
 from app.modules.cycle.service import PeriodOverlapError, log_bbt, log_period_start
 from app.modules.daily_log.catalog import category_of, is_valid_tag
 from app.modules.daily_log.models import DailyTag
 from app.modules.daily_log.service import get_or_create_entry
-from app.modules.health.models import HealthMetric
+from app.modules.health.service import upsert_metric
 from app.modules.import_.models import ImportJob
 from app.modules.import_.parsers import ParsedImport, parse_apple_health_xml, parse_flo_csv
-
-_RAW_BYTES_BY_JOB_ID: dict[int, bytes] = {}
 
 
 class ImportError(Exception):
@@ -43,8 +43,8 @@ def create_import_job(
     )
     db.add(job)
     db.flush()
-    _RAW_BYTES_BY_JOB_ID[job.id] = raw_bytes
-    run_import_job(db, job.id)
+    job.stored_path = str(_store_import_payload(job=job, raw_bytes=raw_bytes))
+    db.flush()
     return job
 
 
@@ -53,14 +53,11 @@ def run_import_job(db: Session, job_id: int) -> ImportJob:
     if job is None:
         raise ImportError(f"import job {job_id} not found")
 
-    raw_bytes = _RAW_BYTES_BY_JOB_ID.get(job_id)
-    if raw_bytes is None:
-        return job
-
     job.status = "processing"
     job.started_at = datetime.now(UTC).replace(tzinfo=None)
     db.flush()
     try:
+        raw_bytes = _read_stored_payload(job)
         parsed = _parse(job.source, raw_bytes)
         summary = apply_parsed_import(db, user_id=job.created_by_id, parsed=parsed)
         summary["skipped"] = len(parsed.skipped)
@@ -74,12 +71,11 @@ def run_import_job(db: Session, job_id: int) -> ImportJob:
         job.summary_json = job.summary_json or {}
     finally:
         job.finished_at = datetime.now(UTC).replace(tzinfo=None)
-        _RAW_BYTES_BY_JOB_ID.pop(job_id, None)
         db.flush()
     return job
 
 
-def run_pending_import_jobs(db: Session, *, limit: int = 10) -> int:
+def process_pending_import_jobs(db: Session, *, limit: int = 10) -> int:
     jobs = list(
         db.execute(
             select(ImportJob)
@@ -90,11 +86,13 @@ def run_pending_import_jobs(db: Session, *, limit: int = 10) -> int:
     )
     processed = 0
     for job in jobs:
-        if job.id not in _RAW_BYTES_BY_JOB_ID:
-            continue
         run_import_job(db, job.id)
         processed += 1
     return processed
+
+
+def run_pending_import_jobs(db: Session, *, limit: int = 10) -> int:
+    return process_pending_import_jobs(db, limit=limit)
 
 
 def apply_parsed_import(db: Session, *, user_id: int, parsed: ParsedImport) -> dict[str, int]:
@@ -160,7 +158,7 @@ def apply_parsed_import(db: Session, *, user_id: int, parsed: ParsedImport) -> d
         summary["bbt_readings"] += 1
 
     for metric in parsed.health_metrics:
-        _upsert_health_metric(
+        upsert_metric(
             db,
             user_id=user_id,
             date=metric.date,
@@ -185,39 +183,20 @@ def _parse(source: str, raw_bytes: bytes) -> ParsedImport:
     raise UnsupportedImportSource(f"unsupported import source: {source}")
 
 
-def _upsert_health_metric(
-    db: Session,
-    *,
-    user_id: int,
-    date,
-    metric_type: str,
-    value: Decimal,
-    unit: str,
-    source: str,
-    meta_json: dict | None,
-) -> HealthMetric:
-    existing = db.execute(
-        select(HealthMetric).where(
-            HealthMetric.user_id == user_id,
-            HealthMetric.date == date,
-            HealthMetric.metric_type == metric_type,
-            HealthMetric.source == source,
-        ),
-    ).scalar_one_or_none()
-    if existing is not None:
-        existing.value = value
-        existing.unit = unit
-        existing.meta_json = meta_json or {}
-        return existing
+def _store_import_payload(*, job: ImportJob, raw_bytes: bytes) -> Path:
+    upload_dir = Path(config.get_settings().upload_dir)
+    import_dir = upload_dir / "imports"
+    import_dir.mkdir(parents=True, exist_ok=True)
+    suffix = Path(job.filename).suffix[:16] or ".bin"
+    path = import_dir / f"{job.id}-{uuid4().hex}{suffix}"
+    path.write_bytes(raw_bytes)
+    return path
 
-    metric = HealthMetric(
-        user_id=user_id,
-        date=date,
-        metric_type=metric_type,
-        value=value,
-        unit=unit,
-        source=source,
-        meta_json=meta_json or {},
-    )
-    db.add(metric)
-    return metric
+
+def _read_stored_payload(job: ImportJob) -> bytes:
+    if not job.stored_path:
+        raise ImportError(f"import job {job.id} has no stored payload")
+    path = Path(job.stored_path)
+    if not path.is_file():
+        raise ImportError(f"import job {job.id} payload not found")
+    return path.read_bytes()

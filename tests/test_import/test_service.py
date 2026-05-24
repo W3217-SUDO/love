@@ -12,7 +12,12 @@ from app.modules.import_.parsers import (
     ParsedPeriod,
     ParsedTag,
 )
-from app.modules.import_.service import apply_parsed_import, create_import_job
+from app.modules.import_.service import (
+    apply_parsed_import,
+    create_import_job,
+    process_pending_import_jobs,
+    run_import_job,
+)
 
 
 def _user(db, name="alice"):
@@ -50,7 +55,19 @@ def test_apply_parsed_import_upserts_without_duplicates(db):
     assert db.query(HealthMetric).count() == 1
 
 
-def test_create_import_job_runs_flo_csv_and_marks_success(db):
+def test_create_import_job_persists_flo_csv_payload_and_run_marks_success(
+    db,
+    tmp_path,
+    monkeypatch,
+):
+    from app import config
+
+    settings = config.get_settings()
+    monkeypatch.setattr(
+        config,
+        "get_settings",
+        lambda: type("S", (), {**settings.model_dump(), "upload_dir": tmp_path})(),
+    )
     user = _user(db)
     raw = b"date,type,value\n2026-05-01,period,start\n2026-05-01,ovulation,positive\n"
 
@@ -62,7 +79,42 @@ def test_create_import_job_runs_flo_csv_and_marks_success(db):
         raw_bytes=raw,
     )
 
+    assert job.status == "pending"
+    assert job.stored_path is not None
+    assert job.summary_json == {}
+    assert db.query(Period).count() == 0
+
+    run_import_job(db, job.id)
+
     assert job.status == "success"
     assert job.summary_json["periods"] == 1
     assert db.query(Period).filter_by(user_id=user.id, start_date=date(2026, 5, 1)).count() == 1
     assert db.query(DailyTag).filter_by(tag_key="ovu_positive").count() == 1
+
+
+def test_run_pending_import_jobs_processes_persisted_payload(db, tmp_path, monkeypatch):
+    from app import config
+
+    settings = config.get_settings()
+    monkeypatch.setattr(
+        config,
+        "get_settings",
+        lambda: type("S", (), {**settings.model_dump(), "upload_dir": tmp_path})(),
+    )
+    user = _user(db)
+    raw = b"date,type,value\n2026-05-03,period,start\n"
+    job = create_import_job(
+        db,
+        user_id=user.id,
+        source="flo",
+        filename="flo.csv",
+        raw_bytes=raw,
+    )
+    db.flush()
+
+    processed = process_pending_import_jobs(db)
+
+    assert processed == 1
+    assert job.status == "success"
+    assert job.summary_json["periods"] == 1
+    assert db.query(Period).filter_by(user_id=user.id, start_date=date(2026, 5, 3)).count() == 1

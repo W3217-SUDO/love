@@ -18,7 +18,7 @@ from sqlalchemy import select
 
 from app.config import get_settings
 from app.db import SessionLocal
-from app.modules.import_.service import run_pending_import_jobs
+from app.modules.import_.service import process_pending_import_jobs
 from app.modules.media.models import Media
 
 log = logging.getLogger(__name__)
@@ -121,10 +121,10 @@ def job_cleanup_orphan_media() -> None:
 
 
 def job_process_pending_imports() -> None:
-    """Process in-memory pending import jobs when bytes are still available."""
+    """Process persisted pending import jobs."""
     try:
         with SessionLocal() as db:
-            processed = run_pending_import_jobs(db)
+            processed = process_pending_import_jobs(db)
             if processed:
                 db.commit()
         log.info("process_pending_imports: processed %d jobs", processed)
