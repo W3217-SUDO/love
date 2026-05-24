@@ -87,3 +87,12 @@ def test_get_settings_persists_backfilled_defaults(client, db):
         assert "partner_activity" in persisted.notification_prefs
     finally:
         event.remove(db, "after_commit", _record_commit)
+
+
+def test_get_settings_page_renders_disable_push_control(client, db):
+    _login(client, db)
+
+    response = client.get("/me/settings", headers={"Accept": "text/html"})
+
+    assert response.status_code == 200
+    assert "data-disable-push" in response.text

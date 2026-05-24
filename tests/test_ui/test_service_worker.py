@@ -22,3 +22,12 @@ def test_service_worker_handles_push_notifications(client):
     assert "push" in body
     assert "showNotification" in body
     assert "notificationclick" in body
+
+
+def test_app_js_handles_disable_push_control():
+    body = "app/static/js/app.js"
+    with open(body, encoding="utf-8") as app_js:
+        source = app_js.read()
+
+    assert "/notifications/subscriptions/disable" in source
+    assert "[data-disable-push]" in source
