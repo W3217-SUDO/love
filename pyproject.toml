@@ -71,7 +71,7 @@ exclude = ["alembic/versions/"]
 disable_error_code = ["no-untyped-def", "type-arg"]
 
 [[tool.mypy.overrides]]
-module = ["apscheduler.*"]
+module = ["apscheduler.*", "defusedxml.*", "pywebpush.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

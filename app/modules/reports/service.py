@@ -1,5 +1,6 @@
 """Report CRUD service with private/shared visibility guards."""
 from datetime import date as date_t
+from typing import Final, cast
 
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
@@ -8,7 +9,7 @@ from app.modules.auth.models import Couple, User
 from app.modules.media.models import Media
 from app.modules.reports.models import Report
 
-_UNSET = object()
+_UNSET: Final = object()
 
 
 class ReportError(Exception):
@@ -127,7 +128,11 @@ def update_report(
     if visibility is not None:
         report.visibility = _validate_visibility(visibility)
     if media_id is not _UNSET:
-        report.media_id = _validate_media(db, media_id=media_id, owner_id=user.id)
+        report.media_id = _validate_media(
+            db,
+            media_id=cast(int | None, media_id),
+            owner_id=user.id,
+        )
     return report
 
 

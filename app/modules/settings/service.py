@@ -41,16 +41,16 @@ def ensure_settings(db: Session, user_id: int) -> UserSettings:
     settings = db.scalar(select(UserSettings).where(UserSettings.user_id == user_id))
     if settings is not None:
         changed = False
-        visibility = dict(settings.visibility or {})
+        visibility: dict[str, str] = dict(settings.visibility or {})
         for key, value in DEFAULT_VISIBILITY.items():
             if key not in visibility:
                 visibility[key] = value
                 changed = True
 
-        notification_prefs = dict(settings.notification_prefs or {})
-        for key, value in DEFAULT_NOTIFICATION_PREFS.items():
-            if key not in notification_prefs:
-                notification_prefs[key] = deepcopy(value)
+        notification_prefs: dict[str, object] = dict(settings.notification_prefs or {})
+        for pref_key, pref_value in DEFAULT_NOTIFICATION_PREFS.items():
+            if pref_key not in notification_prefs:
+                notification_prefs[pref_key] = deepcopy(pref_value)
                 changed = True
 
         if changed:
@@ -81,7 +81,7 @@ def set_visibility(
     if data_type not in DATA_TYPES:
         raise ValueError(f"unknown data type: {data_type}")
 
-    values = dict(settings.visibility or {})
+    values: dict[str, str] = dict(settings.visibility or {})
     values[data_type] = visibility.value
     settings.visibility = values
     db.commit()
@@ -90,5 +90,6 @@ def set_visibility(
 
 
 def can_partner_view(settings: UserSettings, data_type: str) -> bool:
-    visibility = dict(settings.visibility or {})
-    return visibility.get(data_type, DEFAULT_VISIBILITY.get(data_type)) == Visibility.SHARED.value
+    visibility: dict[str, str] = dict(settings.visibility or {})
+    fallback = DEFAULT_VISIBILITY.get(data_type, Visibility.PRIVATE.value)
+    return visibility.get(data_type, fallback) == Visibility.SHARED.value

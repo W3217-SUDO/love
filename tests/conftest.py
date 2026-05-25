@@ -3,7 +3,7 @@ from collections.abc import Iterator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
 
 # Force test env BEFORE importing app
@@ -20,14 +20,28 @@ test_engine = create_engine(_test_url, pool_pre_ping=True, future=True)
 TestSessionLocal = sessionmaker(bind=test_engine, autoflush=False, future=True)
 
 
+def _drop_schema() -> None:
+    with test_engine.begin() as connection:
+        preparer = connection.dialect.identifier_preparer
+        is_mysql = connection.dialect.name in {"mysql", "mariadb"}
+        if is_mysql:
+            connection.execute(text("SET FOREIGN_KEY_CHECKS=0"))
+        table_names = set(inspect(connection).get_table_names()) | set(Base.metadata.tables)
+        for table_name in sorted(table_names, reverse=True):
+            quoted_name = preparer.quote(table_name)
+            connection.execute(text(f"DROP TABLE IF EXISTS {quoted_name}"))
+        if is_mysql:
+            connection.execute(text("SET FOREIGN_KEY_CHECKS=1"))
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _create_schema() -> Iterator[None]:
     # Import all models so metadata is populated
     import app.modules  # noqa: F401
-    Base.metadata.drop_all(bind=test_engine)
+    _drop_schema()
     Base.metadata.create_all(bind=test_engine)
     yield
-    Base.metadata.drop_all(bind=test_engine)
+    _drop_schema()
 
 
 @pytest.fixture()

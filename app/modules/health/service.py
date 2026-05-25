@@ -95,15 +95,16 @@ def upsert_metric(
         db.commit()
     except IntegrityError:
         db.rollback()
-        metric = _find_metric(
+        fallback_metric = _find_metric(
             db,
             user_id=user_id,
             date=date,
             metric_type=metric_type_value,
             source=source,
         )
-        if metric is None:
+        if fallback_metric is None:
             raise
+        metric = fallback_metric
         _update_metric(metric, value=value, unit=unit, meta_json=meta_json)
         db.commit()
 

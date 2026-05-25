@@ -154,14 +154,14 @@ def apply_parsed_import(db: Session, *, user_id: int, parsed: ParsedImport) -> d
             continue
         entry = get_or_create_entry(db, user_id=user_id, date=tag.date)
         category = category_of(tag.tag_key)
-        existing = db.execute(
+        existing_tag = db.execute(
             select(DailyTag).where(
                 DailyTag.entry_id == entry.id,
                 DailyTag.category == category,
                 DailyTag.tag_key == tag.tag_key,
             ),
         ).scalar_one_or_none()
-        if existing is None:
+        if existing_tag is None:
             db.add(
                 DailyTag(
                     entry_id=entry.id,
@@ -171,7 +171,7 @@ def apply_parsed_import(db: Session, *, user_id: int, parsed: ParsedImport) -> d
                 ),
             )
         elif tag.value is not None:
-            existing.value = tag.value
+            existing_tag.value = tag.value
         applied_tags.add((tag.date, tag.tag_key))
     summary["tags"] = len(applied_tags)
 

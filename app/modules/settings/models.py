@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, JSON, String, func
+from sqlalchemy import JSON, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -20,9 +20,13 @@ class UserSettings(Base):
     visibility: Mapped[dict[str, str]] = mapped_column(JSON, nullable=False)
     notification_prefs: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False,
+        DateTime,
+        server_default=func.now(),
+        nullable=False,
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.now(), onupdate=func.now(), nullable=False,
+        DateTime,
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
-

@@ -144,6 +144,8 @@ def process_upload(
         db.flush()
         return row
 
+    assert img is not None
+
     # Save original as WebP (strips EXIF naturally)
     original_path = abs_dir / f"{sha}.webp"
     img.convert("RGB").save(original_path, format="WEBP", quality=92, method=4)
